@@ -12,12 +12,6 @@
 |Student 2 ID:        | 19392951                    |
 |Project Supervisor:  | Irina Tal                   |
 
-> Ensure that the Supervisor formally agrees to supervise your project; this is only recognised once the
-> Supervisor assigns herself/himself via the project Dashboard.
->
-> Project proposals without an assigned
-> Supervisor will not be accepted for presentation to the Approval Panel.
-
 
 ## SECTION B
  
