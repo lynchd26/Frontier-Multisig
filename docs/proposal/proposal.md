@@ -1,20 +1,16 @@
 # School of Computing &mdash; Year 4 Project Proposal Form
 
-> Edit (then commit and push) this document to complete your proposal form.
-> Make use of figures / diagrams where appropriate.
->
-> Do not rename this file.
 
 ## SECTION A
 
-|                     |                   |
-|---------------------|-------------------|
-|Project Title:       | xxxxxx            |
-|Student 1 Name:      | xxxxxx            |
-|Student 1 ID:        | xxxxxx            |
-|Student 2 Name:      | xxxxxx            |
-|Student 2 ID:        | xxxxxx            |
-|Project Supervisor:  | xxxxxx            |
+|                     |                             |
+|---------------------|-----------------------------|
+|Project Title:       | Ethereum MultiSig Wallet    |
+|Student 1 Name:      | Dara Lynch                  |
+|Student 1 ID:        | 19324446                    |
+|Student 2 Name:      | Alan McGrath                |
+|Student 2 ID:        | 19392951                    |
+|Project Supervisor:  | Irina Tal                   |
 
 > Ensure that the Supervisor formally agrees to supervise your project; this is only recognised once the
 > Supervisor assigns herself/himself via the project Dashboard.
@@ -22,19 +18,13 @@
 > Project proposals without an assigned
 > Supervisor will not be accepted for presentation to the Approval Panel.
 
+
 ## SECTION B
- 
-> Guidance: This document is expected to be approximately 3 pages in length, but it can exceed this page limit.
-> It is also permissible to carry forward content from this proposal to your later documents (e.g. functional
-> specification) as appropriate.
->
-> Your proposal must include *at least* the following sections.
  
  
 ### Introduction
  
 > A multisignature ethereum wallet which allows multiple users to approve or deny transactions before the funds are deducted from said wallet. A primary user will create the wallet and give a key to other users so that they can vote to approve or deny transactions.
- 
  
  
 ### Outline
@@ -45,9 +35,8 @@
 ### Background
  
 > Due to the immutable nature of blockchain technology, should you become a victim of a scam or an attacker gets access to your wallet, your funds can be lost forever with no way of getting it back. With this in consideration, it is desirable for wallet owners to have an additional level of protection. A multisig wallet will give users extra security in this regard as a single breach would not be enough for an attacker to take the funds from the wallet.
- 
+> 
 > This can also be used as a shared or company wallet. By requiring multiple approvals for a transaction, the wallet users can have access to a shared wallet without making the funds susceptible to a rogue user or a negligent user having a security breach.
- 
  
  
 ### Achievements
@@ -60,36 +49,44 @@
 > This project provides additional security to a wallet as it requires multiple signatures to make a transaction. This would prove very useful in certain situations, such as a shared account within a business. If one account experiences a breach of security, the contents of the wallet will not be at risk as it is necessary that all users approve the transaction before it is made.
  
  
- 
 ### Programming language(s)
  
 > -Solidity
+>
 > -NextJS
+>
 > -HTML
+>
 > -Tailwind CSS
- 
+> 
  
  
 ### Programming tools / Tech stack
  
 > -Hardhat
+>
 > -Open Zeppelin
+>
 > -Vercel
+>
 > -Infura
+>
 > -IPFS
- 
+> 
  
 ### Learning Challenges
  
 > -While we have used Solidity briefly before, this project should require far more detail and knowledge of smart contracts. 
- 
+>
+>
 > -As a large focus of our project is security, we will learn about how to write industry standard smart contracts in terms of security.
- 
+>
+>
 > -We would like to have a good system for testing and validation. We will learn how we can run or automate these tests through Hardhat. 
- 
+>
+>
 > -Learn how to implement git pipelines. 
- 
-            
+>         
  
  
 ### Breakdown of work
@@ -97,15 +94,21 @@
 #### Dara Lynch
  
 > -Smart Contracts
+>
 > -Backend Development
+>
 > -Front End Development
+>
 > -Exploring git development systems and ensuring proper use of git throughout the project lifecycle.
- 
+>
  
 #### Alan Mc Grath
  
 > -Smart Contracts
+>
 > -Backend Development
+>
 > -Front End Development
+>
 > -Research possible testing systems and frameworks and implement automated testing into our project development
-
+>
