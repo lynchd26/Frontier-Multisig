@@ -18,7 +18,7 @@
  
 ### Introduction
  
-> A multisignature ethereum wallet which allows multiple users to approve or deny transactions before the funds are deducted from said wallet. A primary user will create the wallet and give a key to other users so that they can vote to approve or deny transactions.
+> We want to design a web application that allows users to create and use cryptocurrency wallets with an additional layer of security. Each wallet allows the creator to add secondary wallet holders so that it is shared between whoever is given access. This is called a multisignature wallet, and allows users to approve or deny if another wallet holder makes a transaction with the funds held within the wallet. Each wallet is on the ethereum blockchain which means a higher level of security is provided as all transactions will be stored in an immutable database, the blockchain.
  
  
 ### Outline
@@ -40,9 +40,12 @@
  
 ### Justification
  
-> This project provides additional security to a wallet as it requires multiple signatures to make a transaction. This would prove very useful in certain situations, such as a shared account within a business. If one account experiences a breach of security, the contents of the wallet will not be at risk as it is necessary that all users approve the transaction before it is made.
- 
- 
+> This project provides additional security to a wallet as it requires multiple signatures to make a transaction. This would prove very useful in certain situations, such as a shared account within a business. If one account experiences a breach of security, the contents of the wallet will not be at risk as it is necessary .that all users approve the transaction before it is made.
+>
+> We have also talked to employees who worked with a shared card/wallet. They recommended a number of features which can help streamline the experience and make the system easier to work with. These include the likes of allowing purchases under a certain amount with no approval or a spending limit before approval is required. A ‘whitelist’ of transactions which don’t require approval also makes spending more efficient. We will also add the ability to ‘tag’ purchases in order to make it more clear where money is being spent.
+>
+
+
 ### Programming language(s)
  
 > -Solidity
@@ -70,7 +73,9 @@
  
 ### Learning Challenges
  
-> -While we have used Solidity briefly before, this project should require far more detail and knowledge of smart contracts. 
+> Solidity is not something that we are taught in college so learning this is completely independent.
+> 
+>As well as learning how to write smart contracts it is important that we research blockchain technologies and the processes which are typically used in blockchain development.
 >
 >
 > -As a large focus of our project is security, we will learn about how to write industry standard smart contracts in terms of security.
