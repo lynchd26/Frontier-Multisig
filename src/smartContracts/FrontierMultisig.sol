@@ -11,12 +11,13 @@ contract FrontierMultisig {
     event OwnerRemoval(address indexed owner);   // Remove owner, must be done by original owner, decrease required approvals
     event ApprovalRequirementChange(uint required);  // Change the number of approvals required to execute a transaction
     event DenyTransaction(address indexed owner, uint indexed txIndex); // Make a way to create a number of owners that can deny a transaction before it is cancelled
-    // event DenyRequirementChange(uint required);  // Change the number of deny's required to cancel a transaction
+    event DenyRequirementChange(uint required);  // Change the number of deny's required to cancel a transaction
 
     /* Create an array of owners */
     address[] public owners;
     address[] public originalOwners;
     uint public approvalsRequired = 1;
+    uint public denialsRequired = 1;
     mapping (address => bool) public isOwner;
     mapping (address => bool) public isOriginalOwner;
 
@@ -30,6 +31,7 @@ contract FrontierMultisig {
         uint value;
         bytes data;
         bool executed;
+        bool denied;
     }
 
 
@@ -66,7 +68,8 @@ contract FrontierMultisig {
             to: to,
             value: value,
             data: data,
-            executed: false
+            executed: false,
+            denied: false
         }));
         emit SubmitTransaction(msg.sender, txIndex, to, value, data);
     }
@@ -75,6 +78,9 @@ contract FrontierMultisig {
     function approveTransaction(uint txIndex) public {
         require(isOwner[msg.sender], "User is not an owner");                                       // Must be an owner to approve tx
         require(!approvals[txIndex][msg.sender], "User has already approved this transaction");     // Don't allow duplicate approvals
+        if (denials[txIndex][msg.sender] == true) {
+            revokeTransaction(txIndex);                                                 // call revokeTransaction if already denied
+        }
         approvals[txIndex][msg.sender] = true;                                                      // Set approval from the owner to true
         emit ApproveTransaction(msg.sender, txIndex);
     }
@@ -82,6 +88,9 @@ contract FrontierMultisig {
     function denyTransaction(uint txIndex) public {
         require(isOwner[msg.sender], "User is not an owner");                                       // Must be an owner to deny tx
         require(!denials[txIndex][msg.sender], "User has already denied this transaction");     // Don't allow duplicate denials
+        if (approvals[txIndex][msg.sender] == true) {
+            revokeTransaction(txIndex);                                                 // call revokeTransaction if already approved
+        }
         denials[txIndex][msg.sender] = true;                                                      // Set denial from the owner to true    
         emit DenyTransaction(msg.sender, txIndex);
 
@@ -122,6 +131,7 @@ contract FrontierMultisig {
         require(isOwner[msg.sender], "User is not an owner");                                                           // Must be an owner to execute tx
         require(getTransactionApprovals(txIndex) >= 2, "Transaction has not been approved by enough owners");      // Number of approvals must be greater than the set requirement
         require(!transactions[txIndex].executed, "Transaction has already been executed");                              // Don't allow duplicate executions
+        require(!transactions[txIndex].denied, "Transaction has been denied");                                        // Don't allow execution if transaction has been denied
         transactions[txIndex].executed = true;
         (bool success, ) = transactions[txIndex].to.call{value: transactions[txIndex].value}(transactions[txIndex].data);
         require(success, "Transaction failed");
@@ -165,8 +175,14 @@ contract FrontierMultisig {
         return owners;
     }
 
+    /* Function to get the number of approvals required */
     function getApprovalsRequired() public view returns (uint) {
         return approvalsRequired;
+    }
+
+    /* Function to get the number of denials required */
+    function getDenialsRequired() public view returns (uint) {
+        return denialsRequired;
     }
     
     /* Function to get the number of transactions */
@@ -183,11 +199,31 @@ contract FrontierMultisig {
         emit ApprovalRequirementChange(_approvalsRequired);
     }
 
+    /* Function to change the number of denials required */
+    function changeDenialsRequired(uint _denialsRequired) public {
+        require(isOriginalOwner[msg.sender], "User is not an original owner, so cannot change denials required");
+        address[] memory walletOwners = getOwners();
+        require(_denialsRequired > 0 && _denialsRequired <= walletOwners.length, "Denials required must be greater than 0 and less than or equal to the number of owners");
+        denialsRequired = _denialsRequired;
+        emit DenyRequirementChange(_denialsRequired);
+    }
+
     /* Function to check how many approvals a transaction has */
     function getTransactionApprovalCount(uint txIndex) public view returns (uint) {
         uint count = 0;
         for (uint i = 0; i < owners.length; i++) {
             if (approvals[txIndex][owners[i]]) {
+                count += 1;
+            }
+        }
+        return count;
+    }
+
+    /* Function to check how many denials a transaction has */
+    function getTransactionDenialCount(uint txIndex) public view returns (uint) {
+        uint count = 0;
+        for (uint i = 0; i < owners.length; i++) {
+            if (denials[txIndex][owners[i]]) {
                 count += 1;
             }
         }
