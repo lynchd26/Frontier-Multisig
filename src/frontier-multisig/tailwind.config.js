@@ -1,11 +1,12 @@
 module.exports = {
-  purge: [],
-  darkMode: false, // or 'media' or 'class'
+  content: [
+    "./pages/**/*.{js,jsx,ts,tsx}",
+    './node_modules/flowbite-react/**/*.js'
+  ],
   theme: {
     extend: {},
   },
-  variants: {
-    extend: {},
-  },
-  plugins: [],
+  plugins: [    
+    require('flowbite/plugin'),
+  ],
 }
