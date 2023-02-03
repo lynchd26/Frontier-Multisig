@@ -8,9 +8,13 @@ contract Frontier {
     address[] public wallets;
     address[] owner = ([msg.sender]);
 
+    mapping (address => address) public walletFounders;
+
+
     function createWallet() public returns (address){
         FrontierMultisig newWallet = new FrontierMultisig(owner);
-        // wallets.push(address(newWallet));
+        wallets.push(address(newWallet));
+        walletFounders[address(newWallet)] = msg.sender;
         return address(newWallet);
     }
 
