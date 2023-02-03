@@ -37,22 +37,24 @@ contract FrontierMultisig {
 
     /* Create a mapping of transactions to owners and if they have approved */
     mapping (uint => mapping (address => bool)) public approvals;
+    // tx1 -> owner1 -> true
+    // tx1 -> owner2 -> false
+    // tx1 -> owner3 -> true
 
     /* Create a mapping of transactions to owners and if they have denied */
     mapping (uint => mapping (address => bool)) public denials;
     
     /* Make sure the owners added in the constructor can't be removed */
-    constructor (address[] memory _owners) payable {
-        for (uint i = 0; i < _owners.length; i++) {
-            address owner = _owners[i];
+    constructor (address firstOwner) {
+        // for (uint i = 0; i < _owners.length; i++) {
+            address owner = firstOwner;
             require(owner != address(0), "owner is the zero address");
-            require(!isOwner[owner], "owner already added");
+            // require(!isOwner[owner], "owner already added");
             isOwner[owner] = true;
             owners.push(owner);
             isOriginalOwner[owner] = true;
             originalOwners.push(owner);
-        }
-        require(owners.length >= 1, "owners must be at least 1");
+        // require(owners.length >= 1, "owners must be at least 1");
     }
 
     /* Function to allow deposits into the contract */
