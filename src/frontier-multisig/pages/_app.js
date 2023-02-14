@@ -1,10 +1,39 @@
 import '../styles/globals.css'
 import Link from 'next/link'
-
+import Web3Modal from 'web3modal'
+// import axios from 'axios'
+import { ethers } from 'ethers'
+import Web3 from "web3";
+import WalletConnectProvider from "@walletconnect/web3-provider";
 
 function MyApp({ Component, pageProps }) {
+
+  let accountAddress = ''
+  // Function to connect ethereum wallet and get the account address
+  const connectWallet = async () => {
+    const providerOptions = {
+      walletconnect: {
+        package: WalletConnectProvider, // required
+        options: {
+          infuraId: "YOUR_INFURA_ID", // required
+        },
+      },
+    };
+    const web3Modal = new Web3Modal({
+      network: "mainnet", // optional
+      cacheProvider: true, // optional
+      providerOptions, // required
+    });
+    const provider = await web3Modal.connect();
+    const web3 = new Web3(provider);
+    const accounts = await web3.eth.getAccounts();
+    accountAddress = accounts[0]
+    console.log(accountAddress)
+  }
+
+
   return (
-    <div className='flex items-center bg-gradient-to-r from-gray-100 via-gray-400 to-gray-200 dark:bg-gradient-to-r dark:from-black dark:via-zinc-800 to-black'>
+    <div className='flex items-center bg-gradient-to-r from-gray-100 via-gray-400 to-gray-100 dark:bg-gradient-to-r dark:from-black dark:via-zinc-800 to-black'>
 
         <button data-drawer-target="default-sidebar" data-drawer-toggle="default-sidebar" aria-controls="default-sidebar" type="button" className="inline-flex items-center p-2 mt-2 ml-3 text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600">
           <span className="sr-only">Open sidebar</span>
@@ -38,7 +67,19 @@ function MyApp({ Component, pageProps }) {
                 </li>
               </ul>
           </div>
+
+          <div className="b-2 absolute bottom-20 left-10 overflow-y-auto rounded-lg border-4 border-indigo-500/25 shadow-xl bg-indigo-500 dark:bg-gray-800">            
+                <button className="space-y-2 justify-center items-center"
+                      onClick={() => connectWallet()}>
+                      <a href="#" className="flex items-center pl-6 pr-10 text-base transition duration-75 font-normal text-gray-100 rounded-lg dark:text-white hover:bg-indigo-700 dark:hover:bg-gray-700">
+                        <span className="ml-3 mr-3 ">Connect Wallet ${accountAddress}</span>
+                      </a>
+                </button>
+          </div>
         </aside>
+      
+
+
       <div className="p-4 sm:ml-64">
         <Component {...pageProps} />
       </div>
