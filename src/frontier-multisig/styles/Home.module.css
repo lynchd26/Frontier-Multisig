@@ -3,20 +3,12 @@
 }
 
 .main {
-  /* Padding 8 each side */
-  padding: 20rem 0;
-  /* height wrap or screen */
-  height: 50vh;
-  /* width screen */
-  width: 75vw;
-  flex: 1;
-  display: flex;
-  background-color: rgb(107, 107, 107);
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  border-radius: 10px;
-  border: teal 10px solid;
+  background: #0070f3;
+  flex: 4;
+  height: 100vh;
+  padding: 2rem 2rem;
+  box-sizing: border-box;
+
 }
 
 .footer {

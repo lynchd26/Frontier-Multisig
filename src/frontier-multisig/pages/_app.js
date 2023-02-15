@@ -5,8 +5,16 @@ import Web3Modal from 'web3modal'
 import { ethers } from 'ethers'
 import Web3 from "web3";
 import WalletConnectProvider from "@walletconnect/web3-provider";
+import { useState } from 'react'
 
 function MyApp({ Component, pageProps }) {
+
+  // create a const for the sidebar
+  const [walletButtonText, setWalletButtonText] = useState('Connect Wallet')
+
+  // Function to toggle sidebar
+
+
 
   let accountAddress = ''
   // Function to connect ethereum wallet and get the account address
@@ -28,14 +36,27 @@ function MyApp({ Component, pageProps }) {
     const web3 = new Web3(provider);
     const accounts = await web3.eth.getAccounts();
     accountAddress = accounts[0]
+    if (accountAddress) {
+      setWalletButtonText(accountAddress)
+    } else {
+      setWalletButtonText('Failed to load wallet address')
+    }
     console.log(accountAddress)
   }
 
+  function main(){
+    if (accountAddress != ''){
+      setWalletButtonText(accountAddress)
+    }
+  }
+
+  main()
+
 
   return (
-    <div className='flex items-center bg-gradient-to-r from-gray-100 via-gray-400 to-gray-100 dark:bg-gradient-to-r dark:from-black dark:via-zinc-800 to-black'>
+    <div className='flex items-center bg-gradient-to-r from-gray-100 via-gray-400 to-gray-200 dark:bg-gradient-to-r dark:from-black dark:via-zinc-800 to-black'>
 
-        <button data-drawer-target="default-sidebar" data-drawer-toggle="default-sidebar" aria-controls="default-sidebar" type="button" className="inline-flex items-center p-2 mt-2 ml-3 text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600">
+        <button on data-drawer-target="default-sidebar" data-drawer-toggle="default-sidebar" aria-controls="default-sidebar" type="button" className="inline-flex items-center p-2 mt-2 ml-3 text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600">
           <span className="sr-only">Open sidebar</span>
           <svg className="w-6 h-6" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
               <path clip-rule="evenodd" fill-rule="evenodd" d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z"></path>
@@ -71,8 +92,8 @@ function MyApp({ Component, pageProps }) {
           <div className="b-2 absolute bottom-20 left-10 overflow-y-auto rounded-lg border-4 border-indigo-500/25 shadow-xl bg-indigo-500 dark:bg-gray-800">            
                 <button className="space-y-2 justify-center items-center"
                       onClick={() => connectWallet()}>
-                      <a href="#" className="flex items-center pl-6 pr-10 text-base transition duration-75 font-normal text-gray-100 rounded-lg dark:text-white hover:bg-indigo-700 dark:hover:bg-gray-700">
-                        <span className="ml-3 mr-3 ">Connect Wallet ${accountAddress}</span>
+                      <a href="#" className="flex items-center pl-6 pr-10 text-base transition duration-75 font-normal text-gray-100 rounded-lg dark:text-white hover:bg-indigo-700 dark:hover:bg-gray-700">                     
+                        <span className="ml-3 mr-3 ">{walletButtonText}</span>
                       </a>
                 </button>
           </div>
@@ -80,11 +101,16 @@ function MyApp({ Component, pageProps }) {
       
 
 
+
+
       <div className="p-4 sm:ml-64">
         <Component {...pageProps} />
       </div>
+
     </div>
+    
   )
+  
 }
 
 export default MyApp

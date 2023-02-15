@@ -8,7 +8,6 @@ const inter = Inter({ subsets: ['latin'] })
 export default function Home() {
   return (
     <>    
-
       <main className={styles.main}>
           <div>
             Hello World
