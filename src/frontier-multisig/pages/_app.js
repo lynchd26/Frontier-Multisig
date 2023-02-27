@@ -54,7 +54,7 @@ function MyApp({ Component, pageProps }) {
 
 
   return (
-    <div className='flex items-center bg-gradient-to-r from-gray-100 via-gray-400 to-gray-200 dark:bg-gradient-to-r dark:from-black dark:via-zinc-800 to-black'>
+    <div className='flex items-center bg-gradient-to-r from-gray-100 via-gray-400 to-white dark:bg-gradient-to-r dark:from-black dark:via-zinc-800 to-black'>
 
         <button on data-drawer-target="default-sidebar" data-drawer-toggle="default-sidebar" aria-controls="default-sidebar" type="button" className="inline-flex items-center p-2 mt-2 ml-3 text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600">
           <span className="sr-only">Open sidebar</span>
@@ -103,7 +103,7 @@ function MyApp({ Component, pageProps }) {
 
 
 
-      <div className="p-4 sm:ml-64">
+      <div className="p-10 sm:ml-64 w-4/5 rounded-lg">
         <Component {...pageProps} />
       </div>
 

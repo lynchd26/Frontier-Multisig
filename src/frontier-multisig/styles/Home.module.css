@@ -3,12 +3,12 @@
 }
 
 .main {
-  background: #0070f3;
+  background: #6366f1;
   flex: 4;
-  height: 100vh;
-  padding: 2rem 2rem;
+  height: calc(100vh - 5rem);
+  padding: 2rem;
   box-sizing: border-box;
-
+  /* width: calc(100vw - 64px); */
 }
 
 .footer {
