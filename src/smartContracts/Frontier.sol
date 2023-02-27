@@ -3,22 +3,35 @@ pragma solidity ^0.8.17;
 
 import "./FrontierMultisig.sol";
 
-contract Frontier {
+contract FrontierFactory {
     // Allow users to create a multisig wallet by calling FrontierMultisig.sol from this contract with msg.sender as the owner
-    address[] public wallets;
-    address[] owner = ([msg.sender]);
 
-    mapping (address => address) public walletFounders;
+    event WalletCreated(address wallet, address founder);
 
-
-    function createWallet() public returns (address){
-        FrontierMultisig newWallet = new FrontierMultisig(owner);
-        wallets.push(address(newWallet));
-        walletFounders[address(newWallet)] = msg.sender;
-        return address(newWallet);
+    struct WalletsCreated {
+        address wallet;
+        address founder;
     }
 
-    function getWallets() public view returns (address[] memory){
+    WalletsCreated[] public walletsCreated;
+    FrontierMultisig[] public walletContractsCreated;
+
+    mapping (address => WalletsCreated[]) public walletFounders;
+
+
+    function createWallet() public {
+        FrontierMultisig newWallet = new FrontierMultisig(msg.sender);
+        walletsCreated.push(WalletsCreated(address(newWallet), msg.sender));
+        walletContractsCreated.push(newWallet);
+        walletFounders[msg.sender].push(WalletsCreated(address(newWallet), msg.sender));
+        emit WalletCreated(address(newWallet), msg.sender);
+    }
+
+    function getWallets(address owner) public view returns (address[] memory){
+        address[] memory wallets = new address[](walletFounders[owner].length);
+        for (uint i = 0; i < walletFounders[owner].length; i++) {
+            wallets[i] = walletFounders[owner][i].wallet;
+        }
         return wallets;
     }
 
