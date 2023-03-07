@@ -11,7 +11,7 @@ contract Frontier {
 
 
     function createWallet() public returns (address){
-        FrontierMultisig newWallet = new FrontierMultisig(msg.sender);
+        FrontierMultisig newWallet = new FrontierMultisig();
         wallets.push(address(newWallet));
         walletFounders[address(newWallet)] = msg.sender;
         return address(newWallet);

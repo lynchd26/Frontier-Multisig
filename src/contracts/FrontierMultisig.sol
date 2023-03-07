@@ -45,9 +45,9 @@ contract FrontierMultisig {
     mapping (uint => mapping (address => bool)) public denials;
     
     /* Make sure the owners added in the constructor can't be removed */
-    constructor (address firstOwner) {
+    constructor () {
         // for (uint i = 0; i < _owners.length; i++) {
-            address owner = firstOwner;
+            address owner = msg.sender;
             require(owner != address(0), "owner is the zero address");
             // require(!isOwner[owner], "owner already added");
             isOwner[owner] = true;
