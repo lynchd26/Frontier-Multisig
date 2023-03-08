@@ -1,11 +1,7 @@
 import '../styles/globals.css'
-import Link from 'next/link'
-import Web3Modal from 'web3modal'
-// import axios from 'axios'
 import { ethers } from 'ethers'
-import Web3 from "web3";
-import WalletConnectProvider from "@walletconnect/web3-provider";
 import { useState } from 'react'
+
 
 function MyApp({ Component, pageProps }) {
 
@@ -20,23 +16,21 @@ function MyApp({ Component, pageProps }) {
   let accountAddress = ''
   // Function to connect ethereum wallet and get the account address
   const connectWallet = async () => {
-    const providerOptions = {
-      walletconnect: {
-        package: WalletConnectProvider, // required
-        options: {
-          infuraId: "YOUR_INFURA_ID", // required
-        },
-      },
-    };
-    const web3Modal = new Web3Modal({
-      network: "mainnet", // optional
-      cacheProvider: true, // optional
-      providerOptions, // required
-    });
-    const provider = await web3Modal.connect();
-    const web3 = new Web3(provider);
-    const accounts = await web3.eth.getAccounts();
-    accountAddress = accounts[0]
+    await window.ethereum.request({ method: 'eth_requestAccounts' });
+
+    // Create a new instance of the Ethereum provider using the window.ethereum object
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+  
+    // Get the signer (account) from the provider
+    const signer = provider.getSigner();
+  
+    // Get the connected account address
+    const accountAddress = await signer.getAddress();
+
+    
+    // Log the connected account address
+    console.log(`Connected account address: ${accountAddress}`);
+    
     if (accountAddress) {
       setWalletButtonText(accountAddress)
     } else {
@@ -57,7 +51,6 @@ function MyApp({ Component, pageProps }) {
   return (
 
     <div>
-
 
       <header class="fixed h-16 bg-indigo-500 shadow-md z-50 w-full px-5 py-2 flex justify-between items-center">
         <router-link to="/" class="text-2xl pl-10 text-white">Fontier Multisig</router-link>
