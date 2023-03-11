@@ -10,7 +10,11 @@ module.exports = {
       chainId: 1337,
     },
     sepolia: {
-      url: "https://rpc.sepolia.com",
+      url: "https://sepolia.infura.io/v3/b655d4cdc80a42c39ce722f48afb3197",
+      accounts: [privateKey],
+    },
+    mainnet: {
+      url: "https://mainnet.infura.io/v3/b655d4cdc80a42c39ce722f48afb3197",
       accounts: [privateKey],
     }
   },

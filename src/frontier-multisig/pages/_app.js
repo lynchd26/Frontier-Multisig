@@ -2,7 +2,6 @@ import '../styles/globals.css'
 import { ethers } from 'ethers'
 import { useState } from 'react'
 
-
 function MyApp({ Component, pageProps }) {
 
   // create a const for the sidebar
@@ -13,58 +12,37 @@ function MyApp({ Component, pageProps }) {
     setCurrentPage(page);
   };
 
-  let accountAddress = ''
-  // Function to connect ethereum wallet and get the account address
-  const connectWallet = async () => {
-    await window.ethereum.request({ method: 'eth_requestAccounts' });
-
-    // Create a new instance of the Ethereum provider using the window.ethereum object
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-  
-    // Get the signer (account) from the provider
-    const signer = provider.getSigner();
-  
-    // Get the connected account address
-    const accountAddress = await signer.getAddress();
-
-    
-    // Log the connected account address
-    console.log(`Connected account address: ${accountAddress}`);
-    
-    if (accountAddress) {
-      setWalletButtonText(accountAddress)
-    } else {
-      setWalletButtonText('Failed to load wallet address')
-    }
-    console.log(accountAddress)
+  const connectWallet = () => {
+    setWalletButtonText('Wallet Connected')
   }
 
-  function main(){
-    if (accountAddress != ''){
-      setWalletButtonText(accountAddress)
-    }
+  async function main(){
+    await window.ethereum.request({ method: 'eth_requestAccounts' });
+    var accountAddress = window.ethereum.selectedAddress;
+    setWalletButtonText(accountAddress)
   }
 
   main()
 
 
   return (
-
-    <div>
-
-      <header class="fixed h-16 bg-indigo-500 shadow-md z-50 w-full px-5 py-2 flex justify-between items-center">
-        <router-link to="/" class="text-2xl pl-10 text-white">Fontier Multisig</router-link>
-        <div className="absolute right-0 overflow-y-auto rounded-lg border-4 border-r-8 border-indigo-500/25 shadow-xl bg-indigo-500 dark:bg-gray-800">            
-              <button className="space-y-2 justify-center items-center"
-                    onClick={() => connectWallet()}>
-                    <a href="#" className="flex items-center pl-6 pr-10 text-base transition duration-75 font-normal text-gray-100 rounded-lg dark:text-white hover:bg-indigo-700 dark:hover:bg-gray-700">                     
-                      <span className="ml-3 mr-3 ">{walletButtonText}</span>
-                    </a>
-              </button>
+    // <div style={{ backgroundImage: `url(${require('./media/mesh-gradient(1).png')})`, backgroundSize: 'cover' }}>
+    <div className='bg-gray-300'>
+      
+      <header class="fixed h-16 bg-indigo-500 shadow-md z-50 w-full px-5 py-2 flex justify-between items-center border-b-2 border-blue-300">
+        <router-link to="/" class="text-2xl pl-10 text-white font-bold uppercase tracking-wider">Frontier Multisig</router-link>
+        <div class="flex items-center space-x-3">
+          <button class="flex items-center justify-center space-x-1 text-base font-medium text-gray-100 rounded-md hover:bg-blue-400 py-2 px-3 border border-transparent transition-colors duration-300" onClick={() => connectWallet()}>
+            <span class="bg-green-400 rounded-full w-3 h-3 animate-pulse"></span>
+            <span>{walletButtonText}</span>
+          </button>
         </div>
       </header>
+
+
+
     
-    <div className='flex items-center pt-16 bg-gradient-to-r from-gray-100 via-gray-400 to-white dark:bg-gradient-to-r dark:from-black dark:via-zinc-800 to-black'>
+    <div className="flex items-center pt-16" >
 
         <button on data-drawer-target="default-sidebar" data-drawer-toggle="default-sidebar" aria-controls="default-sidebar" type="button" className="inline-flex items-center p-2 mt-2 ml-3 text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600">
           <span className="sr-only">Open sidebar</span>
@@ -73,7 +51,7 @@ function MyApp({ Component, pageProps }) {
           </svg>
         </button>
 
-        <aside id="default-sidebar" className="fixed flex h-fit pl-10 pt-10 pb-10 z-40 w-1/5 h-screen transition-transform -translate-x-full sm:translate-x-0 align" aria-label="Sidebar">
+        <aside id="default-sidebar" className="fixed flex h-auto pl-10 pt-10 pb-10 z-40 w-1/5 transition-transform -translate-x-full sm:translate-x-0 align" aria-label="Sidebar">
           <div className="items-center px-3 py-4 overflow-y-auto rounded-lg p-4 border-4 border-indigo-500/25 shadow-xl bg-indigo-500 dark:bg-gray-800">            
               <ul className="space-y-2 justify-center items-center">
                 <li>
