@@ -1,2 +1,2 @@
-export const frontierMultisigAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3"
-export const frontierAddress = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
+export const frontierMultisigAddress = "0xCa76Cf05ca4ced7993da6e4239ADd316F838650a"
+export const frontierAddress = "0x272490E7387Bf7cC1D1B6A85B1eb0Aa57EF958DC"

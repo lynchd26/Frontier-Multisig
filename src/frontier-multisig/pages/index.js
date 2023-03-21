@@ -15,6 +15,7 @@ import Frontier from '../../artifacts/contracts/Frontier.sol/Frontier.json'
 import FrontierMultisig from '../../artifacts/contracts/FrontierMultisig.sol/FrontierMultisig.json'
 
 const frontierContract = new ethers.Contract(frontierAddress, Frontier.abi, ethers.getDefaultProvider());
+const frontierMultisigContract = new ethers.Contract(frontierMultisigAddress, FrontierMultisig.abi, ethers.getDefaultProvider());
 
 const list = [
   { id: 1, text: "This is the first tx" },
@@ -35,7 +36,9 @@ const transactionHistory = [
 function IndexPage({ currentPage }) {
 
   const [walletsList, setWalletsListText] = useState('No wallets found');
-
+  const [addressToSend, setAddressToSend] = useState('');
+  const [amountToSend, setAmountToSend] = useState('');
+  const [pendingTx, setPendingTx] = useState(list);
 
   async function createNewWallet() {
     await window.ethereum.request({ method: 'eth_requestAccounts' });                           // Connect to the Ethereum network using MetaMask
@@ -54,7 +57,22 @@ function IndexPage({ currentPage }) {
       setWalletsListText('Error: No wallets found');
     }
     console.log('Wallets:', wallets);
+  }
 
+  async function submitTransaction(address, amount){
+    await window.ethereum.request({ method: 'eth_requestAccounts' });                           // Connect to the Ethereum network using MetaMask
+    const provider = new ethers.BrowserProvider(window.ethereum);                               // Create an instance of the Ethereum provider using the window.ethereum object
+    const signer = await provider.getSigner();
+    const frontierMultisigContract = new ethers.Contract(frontierMultisigAddress, FrontierMultisig.abi, signer);
+    const value = ethers.utils.parseUnits(amount.toString(), "matic");
+    const tx = await frontierMultisigContract.submitTransaction(address, value, "0x");
+    console.log('Transaction submitted:', tx);
+  }
+
+  async function updateTransactions() {
+    const pendingTransactions = await frontierMultisigContract.getTransactions();
+    setPendingTx(pendingTransactions);
+    console.log('Pending transactions:', pendingTransactions);
   }
 
 
@@ -78,26 +96,34 @@ function IndexPage({ currentPage }) {
 
       {currentPage === 'page2' ? (
 
-        <div class="bg-gray-200 px-5 py-1 rounded">
-          <ul>
-            {list.map((item, index) => {
-              const approved = list.filter((item) => item.approved).length;
-              const denied = list.filter((item) => item.denied).length;
+        <div>
+          <div class="flex justify-between items-center mb-5">
+            <h2 class="text-xl text-gray-200 font-semibold">Pending Transactions</h2>
+            <button onClick={updateTransactions} class="px-2 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-600">Refresh</button>
+          </div>
 
-              return (
-                <li class={`flex justify-between items-center py-2 ${index !== list.length - 1 ? 'border-b border-gray-300' : ''}`}>
-                  <p class="text-gray-800">{item.text}</p>
-                  <div class="flex items-center space-x-4">
-                    <p class="text-gray-600">{`${approved}/${list.length}`}</p>
-                    <button class="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600">Approve</button>
-                    <p class="text-gray-600">{`${denied}/${list.length}`}</p>
-                    <button class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600">Deny</button>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+          <div class="bg-gray-200 px-5 py-1 rounded">
+            <ul>
+              {pendingTx.map((item, index) => {
+                // const approved = list.filter((item) => item.approved).length;
+                // const denied = list.filter((item) => item.denied).length;
+
+                return (
+                  <li class={`flex justify-between items-center py-2 ${index !== pendingTx.length - 1 ? 'border-b border-gray-300' : ''}`}>
+                    <p class="text-gray-800">{item.text}</p>
+                    <div class="flex items-center space-x-4">
+                      {/* <p class="text-gray-600">{`${approved}/${list.length}`}</p> */}
+                      <button class="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600">Approve</button>
+                      {/* <p class="text-gray-600">{`${denied}/${list.length}`}</p> */}
+                      <button class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600">Deny</button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         </div>
+
 
       ) : null}
 
@@ -116,7 +142,40 @@ function IndexPage({ currentPage }) {
           ))}
         </div>
 
+      ) : null}
 
+      {currentPage === 'page4' ? (
+        
+      <div className="md:grid md:grid-cols-2 text-white h-1/2">
+        <div className="flex flex-col justify-center items-center">
+          <label htmlFor="address" className="mb-2">Address:</label>
+          <input
+            onChange={(e) => setAddressToSend(e.target.value)}
+            className="w-full px-2 py-1 rounded-md border border-gray-400 mb-4 text-gray-800"
+            style={{ maxWidth: "400px" }}
+          />
+
+          <label htmlFor="amount" className="mb-2">Amount:</label>
+          <input
+            onChange={(e) => setAmountToSend(e.target.value)}
+            className="w-40 px-2 py-1 rounded-md border border-gray-400 mb-4 text-gray-800"
+          />
+
+          <label htmlFor="tag" className="mb-2">Transaction Tag:</label>
+          <input
+            onChange={(e) => setTag(e.target.value)}
+            className="w-full px-2 py-1 rounded-md border border-gray-400 mb-4 text-gray-800"
+            style={{ maxWidth: "400px" }}
+          />
+
+          <button
+            onClick={() => submitTransaction(addressToSend, amountToSend)}
+            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors duration-300 ease-in-out"
+          >
+            Submit transaction
+          </button>
+        </div>
+      </div>
 
 
 

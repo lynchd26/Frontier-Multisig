@@ -37,9 +37,6 @@ contract FrontierMultisig {
 
     /* Create a mapping of transactions to owners and if they have approved */
     mapping (uint => mapping (address => bool)) public approvals;
-    // tx1 -> owner1 -> true
-    // tx1 -> owner2 -> false
-    // tx1 -> owner3 -> true
 
     /* Create a mapping of transactions to owners and if they have denied */
     mapping (uint => mapping (address => bool)) public denials;
