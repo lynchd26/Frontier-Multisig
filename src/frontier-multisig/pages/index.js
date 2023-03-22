@@ -1,11 +1,8 @@
 
-import { Inter } from '@next/font/google'
 import styles from '@/styles/Home.module.css'
 import React, { useState } from 'react'
 import { ethers } from 'ethers'
 import window from 'global'
-
-const inter = Inter({ subsets: ['latin'] })
 
 import {
   frontierMultisigAddress, frontierAddress
@@ -14,8 +11,9 @@ import {
 import Frontier from '../../artifacts/contracts/Frontier.sol/Frontier.json'
 import FrontierMultisig from '../../artifacts/contracts/FrontierMultisig.sol/FrontierMultisig.json'
 
-const frontierContract = new ethers.Contract(frontierAddress, Frontier.abi, ethers.getDefaultProvider());
-const frontierMultisigContract = new ethers.Contract(frontierMultisigAddress, FrontierMultisig.abi, ethers.getDefaultProvider());
+
+// const frontierContract = new ethers.Contract(frontierAddress, Frontier.abi, ethers.getDefaultProvider());
+// const frontierMultisigContract = new ethers.Contract(frontierMultisigAddress, FrontierMultisig.abi, ethers.getDefaultProvider());
 
 const list = [
   { id: 1, text: "This is the first tx" },
@@ -35,10 +33,13 @@ const transactionHistory = [
 
 function IndexPage({ currentPage }) {
 
-  const [walletsList, setWalletsListText] = useState('No wallets found');
+  const [userWallets, setUserWallets] = useState([]);
   const [addressToSend, setAddressToSend] = useState('');
   const [amountToSend, setAmountToSend] = useState('');
   const [pendingTx, setPendingTx] = useState(list);
+  const [activeWallet, setActiveWallet] = useState(null);
+  const [wallets, setWallets] = useState([]);
+
 
   async function createNewWallet() {
     await window.ethereum.request({ method: 'eth_requestAccounts' });                           // Connect to the Ethereum network using MetaMask
@@ -50,49 +51,79 @@ function IndexPage({ currentPage }) {
   }
 
   async function viewMyWallets() {
-    const wallets = await frontierContract.getWallets();
-    if (wallets != null) {
-      setWalletsListText(wallets.join(', '));
-    } else {
-      setWalletsListText('Error: No wallets found');
-    }
-    console.log('Wallets:', wallets);
-  }
-
-  async function submitTransaction(address, amount){
-    await window.ethereum.request({ method: 'eth_requestAccounts' });                           // Connect to the Ethereum network using MetaMask
-    const provider = new ethers.BrowserProvider(window.ethereum);                               // Create an instance of the Ethereum provider using the window.ethereum object
+    await window.ethereum.request({ method: 'eth_requestAccounts' });
+    const provider = new ethers.BrowserProvider(window.ethereum);
     const signer = await provider.getSigner();
-    const frontierMultisigContract = new ethers.Contract(frontierMultisigAddress, FrontierMultisig.abi, signer);
-    const value = ethers.utils.parseUnits(amount.toString(), "matic");
-    const tx = await frontierMultisigContract.submitTransaction(address, value, "0x");
-    console.log('Transaction submitted:', tx);
+    const frontierContract = new ethers.Contract(frontierAddress, Frontier.abi, signer);
+    const userAddress = await signer.getAddress();
+    const wallets = await frontierContract.getUserWallets(userAddress);
+    setUserWallets(wallets);
+    console.log('User wallets:', wallets);
   }
 
-  async function updateTransactions() {
-    const pendingTransactions = await frontierMultisigContract.getTransactions();
-    setPendingTx(pendingTransactions);
-    console.log('Pending transactions:', pendingTransactions);
-  }
+  async function submitTransaction() {
+    if (!activeWallet) {
+        alert("Please select an active wallet first.");
+        return;
+    }
+    await window.ethereum.request({ method: 'eth_requestAccounts' });
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const frontierMultisigContract = new ethers.Contract(activeWallet, FrontierMultisig.abi, signer);
+    try {
+        const tx = await frontierMultisigContract.submitTransaction(address, ethers.utils.parseEther(value), ethers.utils.hexlify("0x"));
+        const receipt = await tx.wait();
+        console.log("Transaction receipt:", receipt);
+    } catch (error) {
+        console.error("Error submitting transaction:", error.message);
+    }
+}
+
+  // async function updateTransactions() {
+  //   const pendingTransactions = await frontierMultisigContract.getTransactions();
+  //   setPendingTx(pendingTransactions);
+  //   console.log('Pending transactions:', pendingTransactions);
+  // }
 
 
   return (
-   <main className={`${styles.main} rounded-lg`}>
-
-      {currentPage === 'page1' ? (
-        
-       
-        <div className='md:columns-2 text-white' style={{height: '50%'}}>
-          <div className='column justify-center items-center'>
-            <button onClick={() => createNewWallet()}>Create New Wallet</button>
-          </div>
-          <div className='column justify-center items-center'>
-            <button onClick={() => viewMyWallets()}>Wallets: {walletsList}</button>
+    <main className={`${styles.main} rounded-lg`}>
+    {currentPage === "page1" ? (
+      <div className="flex flex-col md:flex-row text-white space-y-4 md:space-y-0 md:space-x-4 items-center justify-center h-1/2">
+        <div className="bg-blue-500 p-6 rounded-lg shadow-md w-full md:w-auto">
+          <h2 className="text-lg font-semibold mb-4">Create a New Wallet</h2>
+          <button
+            onClick={() => createNewWallet()}
+            className="bg-white text-blue-500 py-2 px-4 rounded shadow"
+          >
+            Create New Wallet
+          </button>
+        </div>
+        <div className="bg-blue-500 p-6 rounded-lg shadow-md w-full md:w-auto">
+          <h2 className="text-lg font-semibold mb-4">View My Wallets</h2>
+          <button
+            onClick={() => viewMyWallets()}
+            className="bg-white text-blue-500 py-2 px-4 rounded shadow mb-4"
+          >
+            View My Wallets
+          </button>
+          <h3 className="font-semibold">Active Wallet: {activeWallet || "None"}</h3>
+          <div className="space-y-2 mt-4">
+            {userWallets.map((wallet) => (
+              <div key={wallet} className="flex items-center space-x-2">
+                <span className="font-mono text-sm">{wallet}</span>
+                <button
+                  onClick={() => setActiveWallet(wallet)}
+                  className="bg-white text-blue-500 py-1 px-2 rounded shadow text-xs"
+                >
+                  Set as Active
+                </button>
+              </div>
+            ))}
           </div>
         </div>
-
-      ) : null}
-
+      </div>
+    ) : null}  
 
       {currentPage === 'page2' ? (
 

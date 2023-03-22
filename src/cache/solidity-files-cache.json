@@ -1,0 +1,77 @@
+{
+  "_format": "hh-sol-cache-2",
+  "files": {
+    "/home/dara/Documents/2023-ca400-lynchd63-mcgraa46/src/contracts/Frontier.sol": {
+      "lastModificationDate": 1679486036501,
+      "contentHash": "53a8b9a4091bc792e90125ef5dfe8efd",
+      "sourceName": "contracts/Frontier.sol",
+      "solcConfig": {
+        "version": "0.8.17",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./FrontierMultisig.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.17"
+      ],
+      "artifacts": [
+        "Frontier"
+      ]
+    },
+    "/home/dara/Documents/2023-ca400-lynchd63-mcgraa46/src/contracts/FrontierMultisig.sol": {
+      "lastModificationDate": 1679484527159,
+      "contentHash": "578f48db4fc7bf669c821dbb618853fb",
+      "sourceName": "contracts/FrontierMultisig.sol",
+      "solcConfig": {
+        "version": "0.8.17",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.17"
+      ],
+      "artifacts": [
+        "FrontierMultisig"
+      ]
+    }
+  }
+}
