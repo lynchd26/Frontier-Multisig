@@ -23,6 +23,10 @@ contract Frontier {
     }
 
     function getUserWallets(address user) public view returns (address[] memory) {
+        if (userWallets[user].length == 0) {
+            return new address[](0);
+        }
         return userWallets[user];
     }
+
 }
