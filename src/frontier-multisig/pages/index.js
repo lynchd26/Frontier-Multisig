@@ -4,7 +4,6 @@ import { ethers, utlis } from 'ethers'
 import window from 'global'
 import React, { useState, useEffect } from "react";
 
-
 import {
   frontierMultisigAddress, frontierAddress
 } from '../../config.js'
@@ -41,6 +40,7 @@ function IndexPage({ currentPage }) {
   const [activeWallet, setActiveWallet] = useState(null);
   const [depositAmount, setDepositAmount] = useState("");
   const [errorMessage, setErrorMessage] = useState('');
+  const [balance, setBalance] = useState("");
 
 
   async function createNewWallet() {
@@ -90,11 +90,12 @@ function IndexPage({ currentPage }) {
     const signer = await provider.getSigner();
     const frontierMultisigContract = new ethers.Contract(activeWallet, FrontierMultisig.abi, signer);
     try {
-        const tx = await frontierMultisigContract.submitTransaction(address, ethers.utils.parseEther(value), ethers.utils.hexlify("0x"));
+        console.log("to: " + addressToSend, "value: " + parseUnits(amountToSend));
+        const tx = await frontierMultisigContract.submitTransaction(addressToSend, parseUnits(amountToSend), "0x");
         const receipt = await tx.wait();
         console.log("Transaction receipt:", receipt);
     } catch (error) {
-      setErrorMessage('Error viewing wallets: ' + error.message);
+        console.error("Error submitting transaction:", error.message);
     }
   }
 
@@ -117,14 +118,42 @@ function IndexPage({ currentPage }) {
       const signer = await provider.getSigner();
       const tx = await signer.sendTransaction({
         to: activeWallet,
-        value: ethers.utils.parseEther(depositAmount),
+        value: parseUnits(depositAmount),
       });
+
       const receipt = await tx.wait();
       console.log("Deposit transaction receipt:", receipt);
     } catch (error) {
       console.error("Error depositing to multisig wallet:", error.message);
     }
   }
+
+  async function fetchBalance() {
+    if (!activeWallet) {
+      return;
+    }
+    try {
+      await window.ethereum.request({ method: 'eth_requestAccounts' });
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const walletBalance = await provider.getBalance(activeWallet);
+      setBalance(walletBalance.toString());
+    } catch (error) {
+      setErrorMessage("Error fetching wallet balance: " + error.message);
+    }
+  }
+
+  function parseUnits(value) {
+    const [integer, decimal] = value.split(".");
+    const wei = integer + (decimal ? decimal.padEnd(18, "0") : "0".repeat(18));
+    const weiBigInt = BigInt(wei);
+  
+    return weiBigInt;
+  }
+  
+  
+  useEffect(() => {
+    fetchBalance();
+  }, [activeWallet]);
   
   useEffect(() => {
     if (errorMessage) {
@@ -158,47 +187,56 @@ function IndexPage({ currentPage }) {
           </button>
         </div>
         <div className="bg-gray-500 p-6 rounded-lg shadow-md w-full md:w-auto">
-  <h2 className="text-lg font-semibold mb-4">View My Wallets</h2>
-  <button
-    onClick={() => viewMyWallets()}
-    className="bg-white text-blue-500 py-2 px-4 rounded shadow mb-4"
-  >
-    View My Wallets
-  </button>
-  <h3 className="font-semibold">Active Wallet: {activeWallet || "None"}</h3>
-    <div className="space-y-2 mt-4">
-      {userWallets.map((wallet) => (
-        <div key={wallet} className="flex items-center space-x-2">
-          <span className="font-mono text-sm">{wallet}</span>
+      <h2 className="text-lg font-semibold mb-4">View My Wallets</h2>
+      <button
+        onClick={() => viewMyWallets()}
+        className="bg-white text-blue-500 py-2 px-4 rounded shadow mb-4"
+      >
+        View My Wallets
+      </button>
+      <h3 className="font-semibold">Active Wallet: {activeWallet || "None"}</h3>
+        <div className="space-y-2 mt-4">
+          {userWallets.map((wallet) => (
+            <div key={wallet} className="flex items-center space-x-2">
+              <span className="font-mono text-sm">{wallet}</span>
+              <button
+                onClick={() => setActiveWallet(wallet)}
+                className="bg-white text-blue-500 py-1 px-2 rounded shadow text-xs"
+              >
+                Set as Active
+              </button>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4">
+          <h4 className="font-semibold mb-2">Balance: {balance || "N/A"}</h4>
           <button
-            onClick={() => setActiveWallet(wallet)}
+            onClick={() => fetchBalance()}
             className="bg-white text-blue-500 py-1 px-2 rounded shadow text-xs"
           >
-            Set as Active
+            Refresh Balance
           </button>
         </div>
-      ))}
-    </div>
-    <div className="mt-4">
-      <label htmlFor="depositAmount" className="mb-2">
-        Deposit Amount (ETH):
-      </label>
-      <input
-        type="text"
-        id="depositAmount"
-        className="w-full px-2 py-1 rounded-md border border-gray-400 mb-4 text-gray-800"
-        style={{ maxWidth: "400px" }}
-        value={depositAmount}
-        onChange={(e) => setDepositAmount(e.target.value)}
-      />
-      <button
-        onClick={() => depositToMultisig()}
-        className="bg-white text-blue-500 py-2 px-4 rounded shadow"
-      >
-        Deposit
-      </button>
-    </div>
-  </div>
+        <div className="mt-4">
+          <label htmlFor="depositAmount" className="mb-2">
+            Deposit Amount (ETH):
+          </label>
+          <input
+            type="text"
+            id="depositAmount"
+            className="w-full px-2 py-1 rounded-md border border-gray-400 mb-4 text-gray-800"
+            style={{ maxWidth: "400px" }}
+            value={depositAmount}
+            onChange={(e) => setDepositAmount(e.target.value)}
+          />
+          <button
+            onClick={() => depositToMultisig()}
+            className="bg-white text-blue-500 py-2 px-4 rounded shadow"
+          >
+            Deposit
+          </button>
+        </div>
+      </div>
 
 
       </div>
