@@ -174,11 +174,35 @@ contract FrontierMultisig {
     function getDenialsRequired() public view returns (uint) {
         return denialsRequired;
     }
-    
-    /* Function to get the number of transactions */
-    function getTransactions() public view returns (Transaction[] memory) {
-        return transactions;
+
+    function getPendingTransactions() public view returns (address[] memory, uint[] memory, bytes[] memory, bool[] memory, bool[] memory) {
+        uint pendingCount = 0;
+        for (uint i = 0; i < transactions.length; i++) {
+            if (!transactions[i].executed && !transactions[i].denied) {
+                pendingCount++;
+            }
+        }
+
+        address[] memory to = new address[](pendingCount);
+        uint[] memory value = new uint[](pendingCount);
+        bytes[] memory data = new bytes[](pendingCount);
+        bool[] memory executed = new bool[](pendingCount);
+        bool[] memory denied = new bool[](pendingCount);
+
+        uint currentIndex = 0;
+        for (uint i = 0; i < transactions.length; i++) {
+            if (!transactions[i].executed && !transactions[i].denied) {
+                to[currentIndex] = transactions[i].to;
+                value[currentIndex] = transactions[i].value;
+                data[currentIndex] = transactions[i].data;
+                executed[currentIndex] = transactions[i].executed;
+                denied[currentIndex] = transactions[i].denied;
+                currentIndex++;
+            }
+        }
+        return (to, value, data, executed, denied);
     }
+
 
     /* Function to change the number of approvals required */
     function changeApprovalsRequired(uint _approvalsRequired) public {

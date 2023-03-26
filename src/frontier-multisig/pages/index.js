@@ -36,7 +36,7 @@ function IndexPage({ currentPage }) {
   const [userWallets, setUserWallets] = useState([]);
   const [addressToSend, setAddressToSend] = useState('');
   const [amountToSend, setAmountToSend] = useState('');
-  const [pendingTx, setPendingTx] = useState(list);
+  const [pendingTx, setPendingTx] = useState('');
   const [activeWallet, setActiveWallet] = useState(null);
   const [depositAmount, setDepositAmount] = useState("");
   const [errorMessage, setErrorMessage] = useState('');
@@ -136,12 +136,55 @@ function IndexPage({ currentPage }) {
       await window.ethereum.request({ method: 'eth_requestAccounts' });
       const provider = new ethers.BrowserProvider(window.ethereum);
       const walletBalance = await provider.getBalance(activeWallet);
-      setBalance(walletBalance.toString());
+      setBalance(parseUnitsBack(walletBalance));
     } catch (error) {
       setErrorMessage("Error fetching wallet balance: " + error.message);
     }
   }
 
+  async function fetchPendingTransactions() {
+    await window.ethereum.request({ method: "eth_requestAccounts" });
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const frontierMultisigContract = new ethers.Contract(activeWallet, FrontierMultisig.abi, signer);
+    const pendingTransactionsResult = await frontierMultisigContract.getPendingTransactions();
+    
+    const pendingTransactions = pendingTransactionsResult[0].map((to, index) => {
+      return {
+        txId: pendingTransactionsResult[0][index], // Add this line
+        to,
+        value: pendingTransactionsResult[1][index],
+        data: pendingTransactionsResult[2][index],
+        executed: pendingTransactionsResult[3][index],
+        denied: pendingTransactionsResult[4][index],
+      };
+    });
+    console.log("Pending transactions:", pendingTransactions);
+    const pendingTxWithDetails = await Promise.all(
+      pendingTransactions.map(async (tx, index) => {
+        const approvals = await frontierMultisigContract.getTransactionApprovals(index);
+        const denials = await frontierMultisigContract.getTransactionDenials(index);
+        const approvalsRequired = await frontierMultisigContract.getApprovalsRequired();
+        const denialsRequired = await frontierMultisigContract.getDenialsRequired();
+  
+        console.log("Approvals:", approvals);
+        console.log("Denials:", denials);
+        console.log("Approvals required:", approvalsRequired);
+        console.log("Denials required:", denialsRequired);
+  
+        return {
+          ...tx,
+          approvals,
+          denials,
+          approvalsRequired,
+          denialsRequired,
+        };
+      })
+    );
+  
+    setPendingTx(pendingTxWithDetails);
+  }
+  
   function parseUnits(value) {
     const [integer, decimal] = value.split(".");
     const wei = integer + (decimal ? decimal.padEnd(18, "0") : "0".repeat(18));
@@ -150,6 +193,21 @@ function IndexPage({ currentPage }) {
     return weiBigInt;
   }
   
+  function parseUnitsBack(wei, decimals = 18) {
+    const weiBigInt = BigInt(wei);
+    const factorBigInt = BigInt(10) ** BigInt(decimals);
+    const etherBigInt = weiBigInt / factorBigInt;
+    const remainderBigInt = weiBigInt % factorBigInt;
+    const ether = Number(etherBigInt) + Number(remainderBigInt) / Number(factorBigInt);
+  
+    return ether;
+  }  
+
+  useEffect(() => {
+    if (activeWallet) {
+      fetchPendingTransactions();
+    }
+  }, [activeWallet]);
   
   useEffect(() => {
     fetchBalance();
@@ -166,114 +224,118 @@ function IndexPage({ currentPage }) {
     viewMyWallets();
   }, []);
 
-  // async function updateTransactions() {
-  //   const pendingTransactions = await frontierMultisigContract.getTransactions();
-  //   setPendingTx(pendingTransactions);
-  //   console.log('Pending transactions:', pendingTransactions);
-  // }
-
-
-  return (
-    <main className={`${styles.main} rounded-lg`}>
-    {currentPage === "page1" ? (
-      <div className="flex flex-col md:flex-row text-white space-y-4 md:space-y-0 md:space-x-4 items-center justify-center h-1/2">
-        <div className="bg-gray-500 p-6 rounded-lg shadow-md w-full md:w-auto">
-          <h2 className="text-lg font-semibold mb-4">Create a New Wallet</h2>
-          <button
-            onClick={() => createNewWallet()}
-            className="bg-white text-blue-500 py-2 px-4 rounded shadow"
-          >
-            Create New Wallet
-          </button>
-        </div>
-        <div className="bg-gray-500 p-6 rounded-lg shadow-md w-full md:w-auto">
-      <h2 className="text-lg font-semibold mb-4">View My Wallets</h2>
-      <button
-        onClick={() => viewMyWallets()}
-        className="bg-white text-blue-500 py-2 px-4 rounded shadow mb-4"
-      >
-        View My Wallets
-      </button>
-      <h3 className="font-semibold">Active Wallet: {activeWallet || "None"}</h3>
-        <div className="space-y-2 mt-4">
-          {userWallets.map((wallet) => (
-            <div key={wallet} className="flex items-center space-x-2">
-              <span className="font-mono text-sm">{wallet}</span>
+    return (
+        <main className={`${styles.main} grid grid-cols-1 gap-8 rounded-lg`}>
+        {currentPage === 'page1' ? (
+          <div className='text-white'>
+            <h2 className='text-lg font-semibold mb-4'>Create a New Wallet</h2>
+            <button
+              onClick={() => createNewWallet()}
+              className='bg-white text-blue-500 py-2 px-4 rounded shadow mb-4'
+            >
+              Create New Wallet
+            </button>
+      
+            <h2 className='text-lg font-semibold mb-4'>View My Wallets</h2>
+            <button
+              onClick={() => viewMyWallets()}
+              className='bg-white text-blue-500 py-2 px-4 rounded shadow mb-4'
+            >
+              View My Wallets
+            </button>
+            <h3 className='font-semibold'>
+              Active Wallet: {activeWallet || 'None'}
+            </h3>
+            <div className="space-y-2 mt-4">
+              {userWallets.map((wallet) => (
+                <div key={wallet} className="flex items-center space-x-2">
+                  <span className="font-mono text-sm">{wallet}</span>
+                  <button
+                    onClick={() => setActiveWallet(wallet)}
+                    className="bg-white text-blue-500 py-1 px-2 rounded shadow text-xs"
+                  >
+                    Set as Active
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4">
+              <h4 className="font-semibold mb-2">Balance: {balance || "N/A"}</h4>
               <button
-                onClick={() => setActiveWallet(wallet)}
+                onClick={() => fetchBalance()}
                 className="bg-white text-blue-500 py-1 px-2 rounded shadow text-xs"
               >
-                Set as Active
+                Refresh Balance
               </button>
             </div>
-          ))}
-        </div>
-        <div className="mt-4">
-          <h4 className="font-semibold mb-2">Balance: {balance || "N/A"}</h4>
+            <div className="mt-4">
+              <label htmlFor="depositAmount" className="mb-2">
+                Deposit Amount (ETH):
+              </label>
+              <input
+                type="text"
+                id="depositAmount"
+                className="w-full px-2 py-1 rounded-md border border-gray-400 mb-4 text-gray-800"
+                style={{ maxWidth: "400px" }}
+                value={depositAmount}
+                onChange={(e) => setDepositAmount(e.target.value)}
+              />
+              <button
+                onClick={() => depositToMultisig()}
+                className="bg-white text-blue-500 py-2 px-4 rounded shadow"
+              >
+                Deposit
+              </button>
+            </div>
+          </div>
+        ) : null}      
+
+    {currentPage === 'page2' ? (
+      <div>
+        <div className="flex justify-between items-center mb-5">
+          <h2 className="text-xl text-gray-200 font-semibold">Pending Transactions</h2>
           <button
-            onClick={() => fetchBalance()}
-            className="bg-white text-blue-500 py-1 px-2 rounded shadow text-xs"
+            onClick={fetchPendingTransactions}
+            className="px-2 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-600"
           >
-            Refresh Balance
+            Refresh
           </button>
         </div>
-        <div className="mt-4">
-          <label htmlFor="depositAmount" className="mb-2">
-            Deposit Amount (ETH):
-          </label>
-          <input
-            type="text"
-            id="depositAmount"
-            className="w-full px-2 py-1 rounded-md border border-gray-400 mb-4 text-gray-800"
-            style={{ maxWidth: "400px" }}
-            value={depositAmount}
-            onChange={(e) => setDepositAmount(e.target.value)}
-          />
-          <button
-            onClick={() => depositToMultisig()}
-            className="bg-white text-blue-500 py-2 px-4 rounded shadow"
-          >
-            Deposit
-          </button>
-        </div>
+        <ul>
+          {pendingTx.map((item, index) => {
+            const approved = item.approvals;
+            const denied = item.denials;
+            const approvalsRequired = item.approvalsRequired;
+            const denialsRequired = item.denialsRequired;
+
+            return (
+              <li
+                className={`flex justify-between items-center py-2 ${
+                  index !== pendingTx.length - 1 ? 'border-b border-gray-300' : ''
+                }`}
+              >
+                <div className="text-gray-800">
+                  <p>Amount: {parseUnitsBack(item.value)}</p>
+                  <p>To: {item.to}</p>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <p className="text-gray-600">{`${approved}/${approvalsRequired}`}</p>
+                  <button className="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600">
+                    Approve
+                  </button>
+                  <p className="text-gray-600">{`${denied}/${denialsRequired}`}</p>
+                  <button className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600">
+                    Deny
+                  </button>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       </div>
+    ) : null}
 
 
-      </div>
-    ) : null}  
-
-      {currentPage === 'page2' ? (
-
-        <div>
-          <div class="flex justify-between items-center mb-5">
-            <h2 class="text-xl text-gray-200 font-semibold">Pending Transactions</h2>
-            {/* <button onClick={updateTransactions} class="px-2 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-600">Refresh</button> */}
-          </div>
-
-          <div class="bg-gray-200 px-5 py-1 rounded">
-            <ul>
-              {pendingTx.map((item, index) => {
-                const approved = list.filter((item) => item.approved).length;
-                const denied = list.filter((item) => item.denied).length;
-
-                return (
-                  <li class={`flex justify-between items-center py-2 ${index !== pendingTx.length - 1 ? 'border-b border-gray-300' : ''}`}>
-                    <p class="text-gray-800">{item.text}</p>
-                    <div class="flex items-center space-x-4">
-                      <p class="text-gray-600">{`${approved}/${list.length}`}</p>
-                      <button class="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600">Approve</button>
-                      <p class="text-gray-600">{`${denied}/${list.length}`}</p>
-                      <button class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600">Deny</button>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        </div>
-
-
-      ) : null}
 
 
       {currentPage === 'page3' ? (
