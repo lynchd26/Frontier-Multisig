@@ -18,14 +18,6 @@ import FrontierMultisig from '../../artifacts/contracts/FrontierMultisig.sol/Fro
 // const frontierContract = new ethers.Contract(frontierAddress, Frontier.abi, ethers.getDefaultProvider());
 // const frontierMultisigContract = new ethers.Contract(frontierMultisigAddress, FrontierMultisig.abi, ethers.getDefaultProvider());
 
-const list = [
-  { id: 1, text: "This is the first tx" },
-  { id: 2, text: "This is the second tx" },
-  { id: 3, text: "This is the third tx" },
-  { id: 4, text: "This is the fourth tx" },
-  { id: 5, text: "This is the fifth tx" }
-];
-
 const transactionHistory = [
   { id: "Tx1234", tag: "Payment" },
   { id: "Tx5678", tag: "Refund" },
@@ -43,7 +35,7 @@ function IndexPage({ currentPage }) {
   const [activeWallet, setActiveWallet] = useState(null);
   const [depositAmount, setDepositAmount] = useState("");
   const [errorMessage, setErrorMessage] = useState('');
-  const [balance, setBalance] = useState("");
+  const [balance, setBalance] = useState("0");
   const [isRefreshing, setIsRefreshing] = useState(false);
 
 
@@ -98,6 +90,7 @@ function IndexPage({ currentPage }) {
         const tx = await frontierMultisigContract.submitTransaction(addressToSend, parseUnits(amountToSend), "0x");
         const receipt = await tx.wait();
         console.log("Transaction receipt:", receipt);
+        fetchPendingTransactions();
     } catch (error) {
         console.error("Error submitting transaction:", error.message);
     }
@@ -127,6 +120,7 @@ function IndexPage({ currentPage }) {
 
       const receipt = await tx.wait();
       console.log("Deposit transaction receipt:", receipt);
+      fetchBalance();
     } catch (error) {
       console.error("Error depositing to multisig wallet:", error.message);
     }
@@ -205,6 +199,25 @@ function IndexPage({ currentPage }) {
       fetchPendingTransactions(); // Refresh pending transactions list after approval
     } catch (error) {
       console.error("Error approving transaction:", error.message);
+    }
+  }
+
+  async function denyTransaction(txIndex) {
+    if (!activeWallet) {
+      alert("Please select an active wallet first.");
+      return;
+    }
+    await window.ethereum.request({ method: "eth_requestAccounts" });
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const frontierMultisigContract = new ethers.Contract(activeWallet, FrontierMultisig.abi, signer);
+    try {
+      const tx = await frontierMultisigContract.denyTransaction(txIndex);
+      const receipt = await tx.wait();
+      console.log("Deny transaction receipt:", receipt);
+      fetchPendingTransactions(); // Refresh pending transactions list after denial
+    } catch (error) {
+      console.error("Error denying transaction:", error.message);
     }
   }
   
@@ -293,7 +306,7 @@ function IndexPage({ currentPage }) {
           <div key={wallet} className="flex items-center space-x-2">
             <span className="font-mono text-sm">{wallet}</span>
             <button
-              onClick={() => setActiveWallet(wallet)}
+              onClick={() => { setActiveWallet(wallet); fetchBalance(); }}
               className="bg-white text-blue-500 py-1 px-2 rounded shadow text-xs"
             >
               Set as Active
@@ -302,7 +315,7 @@ function IndexPage({ currentPage }) {
         ))}
       </div>
       <div className="mt-4">
-        <h4 className="font-semibold mb-2">Balance: {balance || 'N/A'}</h4>
+        <h4 className="font-semibold mb-2">Balance: {balance || '0'}</h4>
       </div>
       <div className="mt-4">
         <label htmlFor="depositAmount" className="block font-semibold mb-2">
@@ -340,7 +353,7 @@ function IndexPage({ currentPage }) {
           <FontAwesomeIcon icon={faSync} className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
         </button>
       </div>
-      {pendingTx.length === 0 ? (
+      {!pendingTx=== 0 ? (
         <p className="text-gray-200">No pending transactions</p>
       ) : (
         <div className="bg-white rounded-lg shadow">
@@ -368,7 +381,9 @@ function IndexPage({ currentPage }) {
                       </button>
 
                       <p className="text-gray-600">{`${denied}/${denialsRequired}`}</p>
-                      <button className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600">
+                      <button 
+                        onClick={() => denyTransaction(index)}
+                        className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600">
                         Deny
                       </button>
                     </div>

@@ -72,6 +72,11 @@ contract FrontierMultisig {
             revokeTransaction(txIndex);                                                 // call revokeTransaction if already denied
         }
         approvals[txIndex][msg.sender] = true;                                                      // Set approval from the owner to true
+        uint currentApprovals = getTransactionApprovals(txIndex);
+        uint requiredApprovals = approvalsRequired;
+        if (currentApprovals >= requiredApprovals) {
+            executeTransaction(txIndex);                                                // call executeTransaction if approvals are met
+        }
         emit ApproveTransaction(msg.sender, txIndex);
     }
 
@@ -82,6 +87,11 @@ contract FrontierMultisig {
             revokeTransaction(txIndex);                                                 // call revokeTransaction if already approved
         }
         denials[txIndex][msg.sender] = true;                                                      // Set denial from the owner to true    
+        uint currentDenials = getTransactionDenials(txIndex);
+        uint requiredDenials = denialsRequired;
+        if (currentDenials >= requiredDenials) {
+            transactions[txIndex].denied = true;                                                // call executeTransaction if approvals are met
+        }
         emit DenyTransaction(msg.sender, txIndex);
 
     }
@@ -89,8 +99,9 @@ contract FrontierMultisig {
     /* Function to revoke a transaction */
     function revokeTransaction(uint txIndex) public {
         require(isOwner[msg.sender], "User is not an owner");                                       // Must be an owner to revoke tx
-        require(approvals[txIndex][msg.sender], "User has not approved this transaction");          // Don't allow revoking if haven't already approved/denied
+        require(approvals[txIndex][msg.sender] || denials[txIndex][msg.sender], "User has not approved or denied this transaction");          // Don't allow revoking if haven't already approved/denied
         approvals[txIndex][msg.sender] = false;                                                     // Set approval from the owner to false
+        denials[txIndex][msg.sender] = false;                                                       // Set denial from the owner to false
         emit RevokeTransaction(msg.sender, txIndex);
     }
 
@@ -119,7 +130,7 @@ contract FrontierMultisig {
     /* Function to execute a transaction */
     function executeTransaction(uint txIndex) public payable {
         require(isOwner[msg.sender], "User is not an owner");                                                           // Must be an owner to execute tx
-        require(getTransactionApprovals(txIndex) >= 2, "Transaction has not been approved by enough owners");      // Number of approvals must be greater than the set requirement
+        // require(getTransactionApprovals(txIndex) >= 2, "Transaction has not been approved by enough owners");      // Number of approvals must be greater than the set requirement
         require(!transactions[txIndex].executed, "Transaction has already been executed");                              // Don't allow duplicate executions
         require(!transactions[txIndex].denied, "Transaction has been denied");                                        // Don't allow execution if transaction has been denied
         transactions[txIndex].executed = true;
