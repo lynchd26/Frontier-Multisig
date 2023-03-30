@@ -176,6 +176,10 @@ contract FrontierMultisig {
         return owners;
     }
 
+    function getOriginalOwners() public view returns (address[] memory) {
+        return originalOwners;
+    }
+
     /* Function to get the number of approvals required */
     function getApprovalsRequired() public view returns (uint) {
         return approvalsRequired;
@@ -214,6 +218,33 @@ contract FrontierMultisig {
         return (to, value, data, executed, denied);
     }
 
+    function getCompleteTransactions() public view returns (address[] memory, uint[] memory, bytes[] memory, bool[] memory, bool[] memory) {
+            uint completeCount = 0;
+        for (uint i = 0; i < transactions.length; i++) {
+            if (transactions[i].executed || transactions[i].denied) {
+                completeCount++;
+            }
+        }
+
+        address[] memory to = new address[](completeCount);
+        uint[] memory value = new uint[](completeCount);
+        bytes[] memory data = new bytes[](completeCount);
+        bool[] memory executed = new bool[](completeCount);
+        bool[] memory denied = new bool[](completeCount);
+
+        uint currentIndex = 0;
+        for (uint i = 0; i < transactions.length; i++) {
+            if (transactions[i].executed || transactions[i].denied) {
+                to[currentIndex] = transactions[i].to;
+                value[currentIndex] = transactions[i].value;
+                data[currentIndex] = transactions[i].data;
+                executed[currentIndex] = transactions[i].executed;
+                denied[currentIndex] = transactions[i].denied;
+                currentIndex++;
+            }
+        }
+        return (to, value, data, executed, denied);
+    }
 
     /* Function to change the number of approvals required */
     function changeApprovalsRequired(uint _approvalsRequired) public {

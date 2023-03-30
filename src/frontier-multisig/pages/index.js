@@ -32,11 +32,18 @@ function IndexPage({ currentPage }) {
   const [addressToSend, setAddressToSend] = useState('');
   const [amountToSend, setAmountToSend] = useState('');
   const [pendingTx, setPendingTx] = useState([]);
+  const [completeTx, setCompleteTx] = useState([]);
   const [activeWallet, setActiveWallet] = useState(null);
   const [depositAmount, setDepositAmount] = useState("");
   const [errorMessage, setErrorMessage] = useState('');
   const [balance, setBalance] = useState("0");
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [targetAddress, setTargetAddress] = useState("");
+  const [owners, setOwners] = useState([]);
+  const [approvalsRequired, setApprovalsRequired] = useState('');
+  const [displayedApprovals, setDisplayedApprovals] = useState(1);
+  const [denialsRequired, setDenialsRequired] = useState('');
+  const [displayedDenials, setDisplayedDenials] = useState(1);
 
 
   async function createNewWallet() {
@@ -183,6 +190,49 @@ function IndexPage({ currentPage }) {
     setPendingTx(pendingTxWithDetails);
   }
 
+  async function fetchCompleteTransactions() {
+    await window.ethereum.request({ method: "eth_requestAccounts" });
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const frontierMultisigContract = new ethers.Contract(activeWallet, FrontierMultisig.abi, signer);
+    const completeTransactionsResult = await frontierMultisigContract.getCompleteTransactions();
+    
+    const completeTransactions = completeTransactionsResult[0].map((to, index) => {
+      return {
+        txId: completeTransactionsResult[0][index], // Add this line
+        to,
+        value: completeTransactionsResult[1][index],
+        data: completeTransactionsResult[2][index],
+        executed: completeTransactionsResult[3][index],
+        denied: completeTransactionsResult[4][index],
+      };
+    });
+    console.log("Complete transactions:", completeTransactions);
+    const completeTxWithDetails = await Promise.all(
+      completeTransactions.map(async (tx, index) => {
+        const approvals = await frontierMultisigContract.getTransactionApprovals(index);
+        const denials = await frontierMultisigContract.getTransactionDenials(index);
+        const approvalsRequired = await frontierMultisigContract.getApprovalsRequired();
+        const denialsRequired = await frontierMultisigContract.getDenialsRequired();
+  
+        console.log("Approvals:", approvals);
+        console.log("Denials:", denials);
+        console.log("Approvals required:", approvalsRequired);
+        console.log("Denials required:", denialsRequired);
+  
+        return {
+          ...tx,
+          approvals,
+          denials,
+          approvalsRequired,
+          denialsRequired,
+        };
+      })
+    );
+  
+    setCompleteTx(completeTxWithDetails);
+  }
+
   async function approveTransaction(txIndex) {
     if (!activeWallet) {
       alert("Please select an active wallet first.");
@@ -220,7 +270,139 @@ function IndexPage({ currentPage }) {
       console.error("Error denying transaction:", error.message);
     }
   }
+
+  async function addOwner(newOwner) {
+    if (!activeWallet) {
+      alert("Please select an active wallet first.");
+      return;
+    }
+    await window.ethereum.request({ method: "eth_requestAccounts" });
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const frontierMultisigContract = new ethers.Contract(activeWallet, FrontierMultisig.abi, signer);
+    console.log("Adding owner:", newOwner);
+    try {
+      const tx = await frontierMultisigContract.addOwner(newOwner);
+      const receipt = await tx.wait();
+      console.log("Add owner transaction receipt:", receipt);
+      fetchOwners();
+    } catch (error) {
+      console.error("Error adding owner:", error.message);
+    }
+  }
   
+  async function removeOwner(ownerToRemove) {
+    if (!activeWallet) {
+      alert("Please select an active wallet first.");
+      return;
+    }
+    await window.ethereum.request({ method: "eth_requestAccounts" });
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const frontierMultisigContract = new ethers.Contract(activeWallet, FrontierMultisig.abi, signer);
+    try {
+      const tx = await frontierMultisigContract.removeOwner(ownerToRemove);
+      const receipt = await tx.wait();
+      console.log("Remove owner transaction receipt:", receipt);
+      fetchOwners();
+    } catch (error) {
+      console.error("Error removing owner:", error.message);
+    }
+  }
+
+  async function fetchOwners() {
+    if (!activeWallet) {
+      alert("Please select an active wallet first.");
+      return;
+    }
+    await window.ethereum.request({ method: "eth_requestAccounts" });
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const frontierMultisigContract = new ethers.Contract(activeWallet, FrontierMultisig.abi, signer);
+    try {
+      const owners = await frontierMultisigContract.getOwners();
+      setOwners(owners);
+    }
+    catch (error) {
+      console.error("Error fetching owners:", error.message);
+    }
+  }
+
+  async function fetchRequiredApprovals() {
+    if (!activeWallet) {
+      alert("Please select an active wallet first.");
+      return;
+    }
+    await window.ethereum.request({ method: "eth_requestAccounts" });
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const frontierMultisigContract = new ethers.Contract(activeWallet, FrontierMultisig.abi, signer);
+    try {
+      const approvalsRequired = await frontierMultisigContract.getApprovalsRequired();
+      console.log("Approvals required:", approvalsRequired);
+      setApprovalsRequired(approvalsRequired);
+      setDisplayedApprovals(approvalsRequired);
+    }
+    catch (error) {
+      console.error("Error fetching required approvals:", error.message);
+    }
+  }
+
+  async function fetchRequiredDenials() {
+    if (!activeWallet) {
+      alert("Please select an active wallet first.");
+      return;
+    }
+    await window.ethereum.request({ method: "eth_requestAccounts" });
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const frontierMultisigContract = new ethers.Contract(activeWallet, FrontierMultisig.abi, signer);
+    try {
+      const denialsRequired = await frontierMultisigContract.getDenialsRequired();
+      setDenialsRequired(denialsRequired);
+    }
+    catch (error) {
+      console.error("Error fetching required denials:", error.message);
+    }
+  }
+
+  async function changeApprovalsRequired() {
+    if (!activeWallet) {
+      alert("Please select an active wallet first.");
+      return;
+    }
+    await window.ethereum.request({ method: "eth_requestAccounts" });
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const frontierMultisigContract = new ethers.Contract(activeWallet, FrontierMultisig.abi, signer);
+    try {
+      const tx = await frontierMultisigContract.changeApprovalsRequired(approvalsRequired);
+      const receipt = await tx.wait();
+      console.log("Change approvals required transaction receipt:", receipt);
+      fetchRequiredApprovals();
+    } catch (error) {
+      console.error("Error changing approvals required:", error.message);
+    }
+  }
+
+  async function changeDenialsRequired() {
+    if (!activeWallet) {
+      alert("Please select an active wallet first.");
+      return;
+    }
+    await window.ethereum.request({ method: "eth_requestAccounts" });
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const frontierMultisigContract = new ethers.Contract(activeWallet, FrontierMultisig.abi, signer);
+    try {
+      const tx = await frontierMultisigContract.changeDenialsRequired(denialsRequired);
+      const receipt = await tx.wait();
+      console.log("Change denials required transaction receipt:", receipt);
+      fetchRequiredDenials();
+    } catch (error) {
+      console.error("Error changing denials required:", error.message);
+    }
+  }
   
   function parseUnits(value) {
     const [integer, decimal] = value.split(".");
@@ -361,8 +543,8 @@ function IndexPage({ currentPage }) {
             {pendingTx.map((item, index) => {
               const approved = item.approvals;
               const denied = item.denials;
-              const approvalsRequired = item.approvalsRequired;
-              const denialsRequired = item.denialsRequired;
+              const approvalsReq = item.approvalsRequired;
+              const denialsReq = item.denialsRequired;
 
               return (
                 <li key={index} className="p-4">
@@ -372,7 +554,7 @@ function IndexPage({ currentPage }) {
                       <p className='text-violet-500'>To: {item.to}</p>
                     </div>
                     <div className="flex items-center pl-8 space-x-4">
-                      <p className="text-gray-600">{`${approved}/${approvalsRequired}`}</p>
+                      <p className="text-gray-600">{`${approved}/${approvalsReq}`}</p>
                       <button
                         onClick={() => approveTransaction(index)}
                         className="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
@@ -380,7 +562,7 @@ function IndexPage({ currentPage }) {
                         Approve
                       </button>
 
-                      <p className="text-gray-600">{`${denied}/${denialsRequired}`}</p>
+                      <p className="text-gray-600">{`${denied}/${denialsReq}`}</p>
                       <button 
                         onClick={() => denyTransaction(index)}
                         className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600">
@@ -403,17 +585,54 @@ function IndexPage({ currentPage }) {
 
       {currentPage === 'page3' ? (
         
-        <div class="bg-gray-200 px-5 py-1 rounded">
-          {transactionHistory.map((transaction, index) => (
-            <li class={`flex justify-between items-center py-2 ${index !== transactionHistory.length - 1 ? 'border-b border-gray-300' : ''}`}>
-              <p class="text-gray-800 py-1">{transaction.id}</p>
-              <div class="flex items-center">
-                <span class="text-gray-600 mr-2">{transaction.date}</span>
-                <p class="text-indigo-700">{transaction.tag}</p>
-              </div>
-            </li>
-          ))}
+<div className="mx-auto p-6">
+      {/* <div className="flex justify-between items-center mb-5">
+        <h2 className="text-2xl text-gray-200 font-semibold">Pending Transactions</h2>
+        <button
+          onClick={handleRefreshClick}
+          className="flex items-center justify-center px-2 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-600"
+        >
+          <FontAwesomeIcon icon={faSync} className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+        </button>
+      </div> */}
+
+      <button
+        onClick={() => {fetchCompleteTransactions() }}
+      >
+        Refresh
+      </button>
+      {!completeTx=== 0 ? (
+        <p className="text-gray-200">No complete transactions</p>
+      ) : (
+        <div className="bg-white rounded-lg shadow">
+          <ul className="divide-y divide-gray-200">
+          {completeTx.map((item, index) => {
+            const approved = item.approvals;
+            const denied = item.denials;
+            const approvalsReq = item.approvalsRequired;
+            const denialsReq = item.denialsRequired;
+            const isApproved = approved >= approvalsReq;
+            const isDenied = denied >= denialsReq;
+
+            return (
+              <li key={index} className={`p-4 ${isApproved ? 'bg-green-100' : ''} ${isDenied ? 'bg-red-100' : ''}`}>
+                <div className="flex justify-between items-center">
+                  <div className="text-gray-800">
+                    <p className="font-semibold">Amount: {parseUnitsBack(item.value)}</p>
+                    <p className='text-violet-500'>To: {item.to}</p>                     
+                  </div>
+                  <div className="flex items-center pl-8 space-x-4">
+                    <p className="text-gray-600">{`${approved}/${approvalsReq}`}</p>
+                    <p className="text-gray-600">{`${denied}/${denialsReq}`}</p>
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+          </ul>
         </div>
+      )}
+    </div>
 
       ) : null}
 
@@ -450,8 +669,83 @@ function IndexPage({ currentPage }) {
         </div>
       </div>
 
+      ) : null}
 
-
+      {currentPage === 'page5' ? (
+        <div className="mt-4">
+          <input
+              type="text"
+              id="owner address"
+              className="w-full px-2 py-1 rounded-md border border-gray-400 mb-4 text-gray-800"
+              style={{ maxWidth: '400px' }}
+              value={targetAddress}
+              onChange={(e) => setTargetAddress(e.target.value)}
+            />
+            <button
+              onClick={() => addOwner(targetAddress)}
+              className="bg-white text-blue-500 py-2 px-4 rounded shadow"
+            >Add owner</button>
+            <button
+              onClick={() => removeOwner(targetAddress)}
+              className="bg-white text-blue-500 py-2 px-4 rounded shadow"
+            >Remove owner</button>
+            
+            <button
+              onClick={() => {
+                fetchOwners();
+                fetchRequiredApprovals();
+                fetchRequiredDenials();
+              }}
+              className="bg-white text-blue-500 py-2 px-4 rounded shadow"
+            >Refresh</button>
+  
+            <div>
+              <p className="text-gray-200">Owners:</p>
+              <ul className="divide-y divide-gray-200">
+                {owners.map((owner, index) => (
+                  <li key={index} className="p-4">
+                    <div className="flex justify-between items-center">
+                      <div className="text-gray-800">
+                        <p className="font-semibold">{owner}</p>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <div>
+                <p className="text-gray-200">Required approvals: {displayedApprovals.toString()}</p>
+                <input
+                  type="integer"
+                  id="approvals required"
+                  className="w-full px-2 py-1 rounded-md border border-gray-400 mb-4 text-gray-800"
+                  style={{ maxWidth: '400px' }}
+                  value={approvalsRequired}
+                  onChange={(e) => setApprovalsRequired(e.target.value)}
+                />
+                <button
+                  onClick={() => changeApprovalsRequired(approvalsRequired)}
+                  className="bg-white text-blue-500 py-2 px-4 rounded shadow"
+                >Change</button>
+              </div>
+              <div>
+                <p className="text-gray-200">Required denials: {displayedDenials.toString()}</p>
+                <input
+                  type="integer"
+                  id="denials required"
+                  className="w-full px-2 py-1 rounded-md border border-gray-400 mb-4 text-gray-800"
+                  style={{ maxWidth: '400px' }}
+                  value={denialsRequired}
+                  onChange={(e) => setDenialsRequired(e.target.value)}
+                />
+                <button
+                  onClick={() => changeDenialsRequired(denialsRequired)}
+                  className="bg-white text-blue-500 py-2 px-4 rounded shadow"
+                >Change</button>
+              </div>
+            </div>
+        </div>
       ) : null}
 
     </main>
