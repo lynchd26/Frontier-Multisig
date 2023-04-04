@@ -6,37 +6,28 @@ import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 
+import MultisigWallet from './MultisigWallet.js';
+import PendingTransactions from './PendingTransactions.js';
+import Analytics from './Analytics.js';
 
 import {
-  frontierMultisigAddress, frontierAddress
+  frontierAddress
 } from '../../config.js'
 
 import Frontier from '../../artifacts/contracts/Frontier.sol/Frontier.json'
 import FrontierMultisig from '../../artifacts/contracts/FrontierMultisig.sol/FrontierMultisig.json'
 
 
-// const frontierContract = new ethers.Contract(frontierAddress, Frontier.abi, ethers.getDefaultProvider());
-// const frontierMultisigContract = new ethers.Contract(frontierMultisigAddress, FrontierMultisig.abi, ethers.getDefaultProvider());
-
-const transactionHistory = [
-  { id: "Tx1234", tag: "Payment" },
-  { id: "Tx5678", tag: "Refund" },
-  { id: "Tx91011", tag: "Withdrawal" },
-  { id: "Tx121314", tag: "Deposit" },
-];
-
-
-function IndexPage({ currentPage }) {
+function IndexPage({ currentPage, activeWallet, setBalance, txCount, setTxCount }) {
 
   const [userWallets, setUserWallets] = useState([]);
   const [addressToSend, setAddressToSend] = useState('');
   const [amountToSend, setAmountToSend] = useState('');
   const [pendingTx, setPendingTx] = useState([]);
   const [completeTx, setCompleteTx] = useState([]);
-  const [activeWallet, setActiveWallet] = useState(null);
   const [depositAmount, setDepositAmount] = useState("");
   const [errorMessage, setErrorMessage] = useState('');
-  const [balance, setBalance] = useState("0");
+  // const [balance, setBalance] = useState("0");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [targetAddress, setTargetAddress] = useState("");
   const [owners, setOwners] = useState([]);
@@ -79,7 +70,8 @@ function IndexPage({ currentPage }) {
       }
       console.log('User wallets:', wallets);
     } catch (error) {
-      setErrorMessage('Error viewing wallets: ' + error.message);
+      // setErrorMessage('Error viewing wallets: ' + error.message);
+      console.log('Error viewing wallets: ' + error.message);
     }
   }
 
@@ -190,86 +182,6 @@ function IndexPage({ currentPage }) {
     setPendingTx(pendingTxWithDetails);
   }
 
-  async function fetchCompleteTransactions() {
-    await window.ethereum.request({ method: "eth_requestAccounts" });
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    const signer = await provider.getSigner();
-    const frontierMultisigContract = new ethers.Contract(activeWallet, FrontierMultisig.abi, signer);
-    const completeTransactionsResult = await frontierMultisigContract.getCompleteTransactions();
-    
-    const completeTransactions = completeTransactionsResult[0].map((to, index) => {
-      return {
-        txId: completeTransactionsResult[0][index], // Add this line
-        to,
-        value: completeTransactionsResult[1][index],
-        data: completeTransactionsResult[2][index],
-        executed: completeTransactionsResult[3][index],
-        denied: completeTransactionsResult[4][index],
-      };
-    });
-    console.log("Complete transactions:", completeTransactions);
-    const completeTxWithDetails = await Promise.all(
-      completeTransactions.map(async (tx, index) => {
-        const approvals = await frontierMultisigContract.getTransactionApprovals(index);
-        const denials = await frontierMultisigContract.getTransactionDenials(index);
-        const approvalsRequired = await frontierMultisigContract.getApprovalsRequired();
-        const denialsRequired = await frontierMultisigContract.getDenialsRequired();
-  
-        console.log("Approvals:", approvals);
-        console.log("Denials:", denials);
-        console.log("Approvals required:", approvalsRequired);
-        console.log("Denials required:", denialsRequired);
-  
-        return {
-          ...tx,
-          approvals,
-          denials,
-          approvalsRequired,
-          denialsRequired,
-        };
-      })
-    );
-  
-    setCompleteTx(completeTxWithDetails);
-  }
-
-  async function approveTransaction(txIndex) {
-    if (!activeWallet) {
-      alert("Please select an active wallet first.");
-      return;
-    }
-    await window.ethereum.request({ method: "eth_requestAccounts" });
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    const signer = await provider.getSigner();
-    const frontierMultisigContract = new ethers.Contract(activeWallet, FrontierMultisig.abi, signer);
-    try {
-      const tx = await frontierMultisigContract.approveTransaction(txIndex);
-      const receipt = await tx.wait();
-      console.log("Approve transaction receipt:", receipt);
-      fetchPendingTransactions(); // Refresh pending transactions list after approval
-    } catch (error) {
-      console.error("Error approving transaction:", error.message);
-    }
-  }
-
-  async function denyTransaction(txIndex) {
-    if (!activeWallet) {
-      alert("Please select an active wallet first.");
-      return;
-    }
-    await window.ethereum.request({ method: "eth_requestAccounts" });
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    const signer = await provider.getSigner();
-    const frontierMultisigContract = new ethers.Contract(activeWallet, FrontierMultisig.abi, signer);
-    try {
-      const tx = await frontierMultisigContract.denyTransaction(txIndex);
-      const receipt = await tx.wait();
-      console.log("Deny transaction receipt:", receipt);
-      fetchPendingTransactions(); // Refresh pending transactions list after denial
-    } catch (error) {
-      console.error("Error denying transaction:", error.message);
-    }
-  }
 
   async function addOwner(newOwner) {
     if (!activeWallet) {
@@ -443,236 +355,25 @@ function IndexPage({ currentPage }) {
     viewMyWallets();
   }, []);
 
-  const handleRefreshClick = async () => {
-    setIsRefreshing(true);
-    const fetchPromise = fetchPendingTransactions();
-  
-    const minSpinTime = 1000;
-  
-    const spinTimeout = new Promise((resolve) => {
-      setTimeout(resolve, minSpinTime);
-    });
-  
-    await Promise.all([fetchPromise, spinTimeout]);
-    setIsRefreshing(false);
-  };
+
   
   
     return (
-        <main className={`${styles.main} grid grid-cols-1 gap-8 rounded-lg`}>
-{currentPage === 'page1' ? (
-  <div className="text-white">
-    <div className="flex justify-between items-center mb-6">
-      <h2 className="text-2xl font-semibold">Multisig Wallet</h2>
-      <button
-        onClick={() => {
-          viewMyWallets();
-          fetchBalance();
-        }}
-        className="bg-white text-blue-500 py-1 px-2 rounded shadow text-xs"
-      >
-        Refresh
-      </button>
-    </div>
-    <h2 className="text-lg font-semibold mb-4">Create a New Wallet</h2>
-    <button
-      onClick={() => createNewWallet()}
-      className="bg-white text-blue-500 py-2 px-4 rounded shadow mb-4"
-    >
-      Create New Wallet
-    </button>
-    <div className="mt-4">
-      <h3 className="font-semibold">Active Wallet: {activeWallet || 'None'}</h3>
-      <div className="space-y-2 mt-4">
-        {userWallets.map((wallet) => (
-          <div key={wallet} className="flex items-center space-x-2">
-            <span className="font-mono text-sm">{wallet}</span>
-            <button
-              onClick={() => { setActiveWallet(wallet); fetchBalance(); }}
-              className="bg-white text-blue-500 py-1 px-2 rounded shadow text-xs"
-            >
-              Set as Active
-            </button>
-          </div>
-        ))}
-      </div>
-      <div className="mt-4">
-        <h4 className="font-semibold mb-2">Balance: {balance || '0'}</h4>
-      </div>
-      <div className="mt-4">
-        <label htmlFor="depositAmount" className="block font-semibold mb-2">
-          Deposit Amount (ETH):
-        </label>
-        <input
-          type="text"
-          id="depositAmount"
-          className="w-full px-2 py-1 rounded-md border border-gray-400 mb-4 text-gray-800"
-          style={{ maxWidth: '400px' }}
-          value={depositAmount}
-          onChange={(e) => setDepositAmount(e.target.value)}
-        />
-        <button
-          onClick={() => depositToMultisig()}
-          className="bg-white text-blue-500 py-2 px-4 rounded shadow"
-        >
-          Deposit
-        </button>
-      </div>
-    </div>
-  </div>
-) : null}
+      <main className={`${styles.main} grid grid-cols-1 gap-8 rounded-lg`}>
+        {currentPage === 'page1' ? (
+          <MultisigWallet activeWallet={activeWallet} depositAmount={depositAmount} setBalance={setBalance} txCount={txCount} setTxCount={setTxCount} errorMessage={errorMessage} />)        
+        : null}
 
-  
+        {currentPage === 'page2' ? (
+          <PendingTransactions pendingTx={pendingTx} activeWallet={activeWallet} setTxCount={setTxCount} errorMessage={errorMessage} />
+        ) : null}
 
-{currentPage === 'page2' ? (
-    <div className="mx-auto p-6">
-      <div className="flex justify-between items-center mb-5">
-        <h2 className="text-2xl text-gray-200 font-semibold">Pending Transactions</h2>
-        <button
-          onClick={handleRefreshClick}
-          className="flex items-center justify-center px-2 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-600"
-        >
-          <FontAwesomeIcon icon={faSync} className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-        </button>
-      </div>
-      {!pendingTx=== 0 ? (
-        <p className="text-gray-200">No pending transactions</p>
-      ) : (
-        <div className="bg-white rounded-lg shadow">
-          <ul className="divide-y divide-gray-200">
-            {pendingTx.map((item, index) => {
-              const approved = item.approvals;
-              const denied = item.denials;
-              const approvalsReq = item.approvalsRequired;
-              const denialsReq = item.denialsRequired;
+        {currentPage === 'page3' ? (
+          <Analytics activeWallet={activeWallet} ></Analytics>      
+        ) : null}
 
-              return (
-                <li key={index} className="p-4">
-                  <div className="flex justify-between items-center">
-                    <div className="text-gray-800">
-                      <p className="font-semibold">Amount: {parseUnitsBack(item.value)}</p>
-                      <p className='text-violet-500'>To: {item.to}</p>
-                    </div>
-                    <div className="flex items-center pl-8 space-x-4">
-                      <p className="text-gray-600">{`${approved}/${approvalsReq}`}</p>
-                      <button
-                        onClick={() => approveTransaction(index)}
-                        className="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
-                      >
-                        Approve
-                      </button>
-
-                      <p className="text-gray-600">{`${denied}/${denialsReq}`}</p>
-                      <button 
-                        onClick={() => denyTransaction(index)}
-                        className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600">
-                        Deny
-                      </button>
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      )}
-    </div>
-) : null}
-
-
-
-
-
-      {currentPage === 'page3' ? (
-        
-<div className="mx-auto p-6">
-      {/* <div className="flex justify-between items-center mb-5">
-        <h2 className="text-2xl text-gray-200 font-semibold">Pending Transactions</h2>
-        <button
-          onClick={handleRefreshClick}
-          className="flex items-center justify-center px-2 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-600"
-        >
-          <FontAwesomeIcon icon={faSync} className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-        </button>
-      </div> */}
-
-      <button
-        onClick={() => {fetchCompleteTransactions() }}
-      >
-        Refresh
-      </button>
-      {!completeTx=== 0 ? (
-        <p className="text-gray-200">No complete transactions</p>
-      ) : (
-        <div className="bg-white rounded-lg shadow">
-          <ul className="divide-y divide-gray-200">
-          {completeTx.map((item, index) => {
-            const approved = item.approvals;
-            const denied = item.denials;
-            const approvalsReq = item.approvalsRequired;
-            const denialsReq = item.denialsRequired;
-            const isApproved = approved >= approvalsReq;
-            const isDenied = denied >= denialsReq;
-
-            return (
-              <li key={index} className={`p-4 ${isApproved ? 'bg-green-100' : ''} ${isDenied ? 'bg-red-100' : ''}`}>
-                <div className="flex justify-between items-center">
-                  <div className="text-gray-800">
-                    <p className="font-semibold">Amount: {parseUnitsBack(item.value)}</p>
-                    <p className='text-violet-500'>To: {item.to}</p>                     
-                  </div>
-                  <div className="flex items-center pl-8 space-x-4">
-                    <p className="text-gray-600">{`${approved}/${approvalsReq}`}</p>
-                    <p className="text-gray-600">{`${denied}/${denialsReq}`}</p>
-                  </div>
-                </div>
-              </li>
-            );
-          })}
-          </ul>
-        </div>
-      )}
-    </div>
-
-      ) : null}
-
-      {currentPage === 'page4' ? (
-        
-      <div className="md:grid md:grid-cols-2 text-white h-1/2">
-        <div className="flex flex-col justify-center items-center">
-          <label htmlFor="address" className="mb-2">Address:</label>
-          <input
-            onChange={(e) => setAddressToSend(e.target.value)}
-            className="w-full px-2 py-1 rounded-md border border-gray-400 mb-4 text-gray-800"
-            style={{ maxWidth: "400px" }}
-          />
-
-          <label htmlFor="amount" className="mb-2">Amount:</label>
-          <input
-            onChange={(e) => setAmountToSend(e.target.value)}
-            className="w-40 px-2 py-1 rounded-md border border-gray-400 mb-4 text-gray-800"
-          />
-
-          <label htmlFor="tag" className="mb-2">Transaction Tag:</label>
-          <input
-            onChange={(e) => setTag(e.target.value)}
-            className="w-full px-2 py-1 rounded-md border border-gray-400 mb-4 text-gray-800"
-            style={{ maxWidth: "400px" }}
-          />
-
-          <button
-            onClick={() => submitTransaction(addressToSend, amountToSend)}
-            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors duration-300 ease-in-out"
-          >
-            Submit transaction
-          </button>
-        </div>
-      </div>
-
-      ) : null}
-
-      {currentPage === 'page5' ? (
-        <div className="mt-4">
+        {currentPage === 'page4' ? (
+          <div className="mt-4">
           <input
               type="text"
               id="owner address"
