@@ -1,11 +1,14 @@
 import { ethers } from "ethers";
 import { useState, useEffect } from "react";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSync } from '@fortawesome/free-solid-svg-icons';
 
 import FrontierMultisig from '../../artifacts/contracts/FrontierMultisig.sol/FrontierMultisig.json'
 
 function Analytics( {activeWallet} ) {
 
     const [completeTx, setCompleteTx] = useState([]);
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
 
     async function fetchCompleteTransactions() {
@@ -65,14 +68,39 @@ function Analytics( {activeWallet} ) {
         return ether;
       }  
 
+      const handleRefreshClick = async () => {
+        setIsRefreshing(true);
+        const fetchPromise = fetchCompleteTransactions();
+      
+        const minSpinTime = 1000;
+      
+        const spinTimeout = new Promise((resolve) => {
+          setTimeout(resolve, minSpinTime);
+        });
+      
+        await Promise.all([fetchPromise, spinTimeout]);
+        setIsRefreshing(false);
+      };
+
+      useEffect(() => {
+        if (activeWallet) {
+          fetchCompleteTransactions();
+        }
+      }, [activeWallet]);
+      
+
   return (
-    <div className="Analytics">
-      <button
-        onClick={() => {fetchCompleteTransactions() }}
-      >
-        Refresh
-      </button>
-      {!completeTx=== 0 ? (
+    <div className="mx-auto w-full p-6">
+      <div className="flex justify-between items-center mb-5">
+        <h2 className="text-2xl text-gray-200 font-semibold">Complete Transactions</h2>
+        <button
+          onClick={handleRefreshClick}
+          className="flex items-center justify-center px-2 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-600"
+        >
+          <FontAwesomeIcon icon={faSync} className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+        </button>
+      </div>
+      {!completeTx === 0 ? (
         <p className="text-gray-200">No complete transactions</p>
       ) : (
         <div className="bg-white rounded-lg shadow">
@@ -85,21 +113,37 @@ function Analytics( {activeWallet} ) {
             const isApproved = approved >= approvalsReq;
             const isDenied = denied >= denialsReq;
 
+            const isFirstItem = index === 0;
+            const isLastItem = index === completeTx.length - 1;
+
+            const roundedClasses = `${isFirstItem ? "rounded-t-lg" : ""} ${
+              isLastItem ? "rounded-b-lg" : ""
+            }`;
+
             return (
-              <li key={index} className={`p-4 ${isApproved ? 'bg-green-100' : ''} ${isDenied ? 'bg-red-100' : ''}`}>
-                <div className="flex justify-between items-center">
-                  <div className="text-gray-800">
-                    <p className="font-semibold">Amount: {parseUnitsBack(item.value)}</p>
-                    <p className='text-violet-500'>To: {item.to}</p>                     
+              <div
+                key={index}
+                className={`${roundedClasses} ${
+                  isApproved ? "bg-green-100" : ""
+                } ${isDenied ? "bg-red-100" : ""}`}
+              >
+                <li className={`p-4 ${!isFirstItem && !isLastItem ? "border-b border-gray-200" : ""}`}>
+                  <div className="flex justify-between items-center">
+                    <div className="text-gray-800">
+                      <p className="font-semibold">Amount: {parseUnitsBack(item.value)}</p>
+                      <p className="text-violet-500">To: {item.to}</p>
+                    </div>
+                    <div className="flex items-center pl-8 space-x-4">
+                      <p className="text-gray-600">{`${approved}/${approvalsReq}`}</p>
+                      <p className="text-gray-600">{`${denied}/${denialsReq}`}</p>
+                    </div>
                   </div>
-                  <div className="flex items-center pl-8 space-x-4">
-                    <p className="text-gray-600">{`${approved}/${approvalsReq}`}</p>
-                    <p className="text-gray-600">{`${denied}/${denialsReq}`}</p>
-                  </div>
-                </div>
-              </li>
+                </li>
+              </div>
             );
           })}
+
+
           </ul>
         </div>
       )}

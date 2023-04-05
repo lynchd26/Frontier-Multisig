@@ -148,7 +148,8 @@ function PendingTransactions({ activeWallet, setTxCount }) {
       ) : (
         <div className="bg-white rounded-lg shadow">
           <ul className="divide-y divide-gray-200">
-            {pendingTx.map((item, index) => {
+            {pendingTx
+            .map((item, index) => {
               const approved = item.approvals;
               const denied = item.denials;
               const approvalsReq = item.approvalsRequired;
