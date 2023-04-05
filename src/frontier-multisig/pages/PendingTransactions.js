@@ -7,21 +7,9 @@ import { faSync } from '@fortawesome/free-solid-svg-icons';
 import FrontierMultisig from '../../artifacts/contracts/FrontierMultisig.sol/FrontierMultisig.json'
 
 function PendingTransactions({ activeWallet, setTxCount }) {
-    const [userWallets, setUserWallets] = useState([]);
-    const [addressToSend, setAddressToSend] = useState('');
-    const [amountToSend, setAmountToSend] = useState('');
-    const [completeTx, setCompleteTx] = useState([]);
-    const [depositAmount, setDepositAmount] = useState("");
-    const [errorMessage, setErrorMessage] = useState('');
-    const [balance, setBalance] = useState("0");
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [pendingTx, setPendingTx] = useState([]);
-    const [targetAddress, setTargetAddress] = useState("");
-    const [owners, setOwners] = useState([]);
-    const [approvalsRequired, setApprovalsRequired] = useState('');
-    const [displayedApprovals, setDisplayedApprovals] = useState(1);
-    const [denialsRequired, setDenialsRequired] = useState('');
-    const [displayedDenials, setDisplayedDenials] = useState(1);
+
 
 
   async function fetchPendingTransactions() {
@@ -35,15 +23,15 @@ function PendingTransactions({ activeWallet, setTxCount }) {
     const frontierMultisigContract = new ethers.Contract(activeWallet, FrontierMultisig.abi, signer);
     const pendingTransactionsResult = await frontierMultisigContract.getPendingTransactions();
     
-    const pendingTransactions = pendingTransactionsResult[0].map((to, index) => {
+    const pendingTransactions = pendingTransactionsResult[1].map((to, index) => {
       return {
-        txId: pendingTransactionsResult[0][index], // Add this line
+        txId: pendingTransactionsResult[0][index],
         to,
-        value: pendingTransactionsResult[1][index],
-        data: pendingTransactionsResult[2][index],
-        executed: pendingTransactionsResult[3][index],
-        denied: pendingTransactionsResult[4][index],
-      };
+        value: pendingTransactionsResult[2][index],
+        data: pendingTransactionsResult[3][index],
+        executed: pendingTransactionsResult[4][index],
+        denied: pendingTransactionsResult[5][index],
+      };      
     });
     console.log("Pending transactions:", pendingTransactions);
     const pendingTxWithDetails = await Promise.all(
@@ -81,7 +69,7 @@ function PendingTransactions({ activeWallet, setTxCount }) {
     const signer = await provider.getSigner();
     const frontierMultisigContract = new ethers.Contract(activeWallet, FrontierMultisig.abi, signer);
     try {
-      const tx = await frontierMultisigContract.approveTransaction(txIndex);
+      const tx = await frontierMultisigContract.approveTransaction(pendingTx[txIndex].txId);
       const receipt = await tx.wait();
       console.log("Approve transaction receipt:", receipt);
       fetchPendingTransactions(); // Refresh pending transactions list after approval
@@ -100,7 +88,7 @@ function PendingTransactions({ activeWallet, setTxCount }) {
     const signer = await provider.getSigner();
     const frontierMultisigContract = new ethers.Contract(activeWallet, FrontierMultisig.abi, signer);
     try {
-      const tx = await frontierMultisigContract.denyTransaction(txIndex);
+      const tx = await frontierMultisigContract.denyTransaction(pendingTx[txIndex].txId);
       const receipt = await tx.wait();
       console.log("Deny transaction receipt:", receipt);
       fetchPendingTransactions(); // Refresh pending transactions list after denial
@@ -109,43 +97,7 @@ function PendingTransactions({ activeWallet, setTxCount }) {
     }
   }
 
-  async function fetchRequiredApprovals() {
-    if (!activeWallet) {
-      alert("Please select an active wallet first.");
-      return;
-    }
-    await window.ethereum.request({ method: "eth_requestAccounts" });
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    const signer = await provider.getSigner();
-    const frontierMultisigContract = new ethers.Contract(activeWallet, FrontierMultisig.abi, signer);
-    try {
-      const approvalsRequired = await frontierMultisigContract.getApprovalsRequired();
-      console.log("Approvals required:", approvalsRequired);
-      setApprovalsRequired(approvalsRequired);
-      setDisplayedApprovals(approvalsRequired);
-    }
-    catch (error) {
-      console.error("Error fetching required approvals:", error.message);
-    }
-  }
-
-  async function fetchRequiredDenials() {
-    if (!activeWallet) {
-      alert("Please select an active wallet first.");
-      return;
-    }
-    await window.ethereum.request({ method: "eth_requestAccounts" });
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    const signer = await provider.getSigner();
-    const frontierMultisigContract = new ethers.Contract(activeWallet, FrontierMultisig.abi, signer);
-    try {
-      const denialsRequired = await frontierMultisigContract.getDenialsRequired();
-      setDenialsRequired(denialsRequired);
-    }
-    catch (error) {
-      console.error("Error fetching required denials:", error.message);
-    }
-  }
+  
   
   function parseUnitsBack(wei, decimals = 18) {
     try {
@@ -191,7 +143,7 @@ function PendingTransactions({ activeWallet, setTxCount }) {
           <FontAwesomeIcon icon={faSync} className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
         </button>
       </div>
-      {!pendingTx=== 0 ? (
+      {pendingTx.length === 0 ? (
         <p className="text-gray-200">No pending transactions</p>
       ) : (
         <div className="bg-white rounded-lg shadow">

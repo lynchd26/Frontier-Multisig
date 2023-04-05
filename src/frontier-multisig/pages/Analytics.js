@@ -1,6 +1,7 @@
 import { ethers } from "ethers";
 import { useState, useEffect } from "react";
 
+import FrontierMultisig from '../../artifacts/contracts/FrontierMultisig.sol/FrontierMultisig.json'
 
 function Analytics( {activeWallet} ) {
 
@@ -54,6 +55,15 @@ function Analytics( {activeWallet} ) {
         setCompleteTx(completeTxWithDetails);
       }
 
+      function parseUnitsBack(wei, decimals = 18) {
+        const weiBigInt = BigInt(wei);
+        const factorBigInt = BigInt(10) ** BigInt(decimals);
+        const etherBigInt = weiBigInt / factorBigInt;
+        const remainderBigInt = weiBigInt % factorBigInt;
+        const ether = Number(etherBigInt) + Number(remainderBigInt) / Number(factorBigInt);
+      
+        return ether;
+      }  
 
   return (
     <div className="Analytics">

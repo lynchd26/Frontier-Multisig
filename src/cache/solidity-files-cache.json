@@ -2,7 +2,7 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/home/dara/Documents/2023-ca400-lynchd63-mcgraa46/src/contracts/Frontier.sol": {
-      "lastModificationDate": 1680100419462,
+      "lastModificationDate": 1680706305826,
       "contentHash": "7aba8c74d2f62862ba7d138eaffb6f70",
       "sourceName": "contracts/Frontier.sol",
       "solcConfig": {
@@ -39,8 +39,8 @@
       ]
     },
     "/home/dara/Documents/2023-ca400-lynchd63-mcgraa46/src/contracts/FrontierMultisig.sol": {
-      "lastModificationDate": 1680171836085,
-      "contentHash": "ea1beb0d2678b6dd6ed4dd9692e9725a",
+      "lastModificationDate": 1680710458715,
+      "contentHash": "25e79ca500fe7a04a3e379797e13561f",
       "sourceName": "contracts/FrontierMultisig.sol",
       "solcConfig": {
         "version": "0.8.17",

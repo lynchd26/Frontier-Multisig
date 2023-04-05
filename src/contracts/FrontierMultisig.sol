@@ -190,36 +190,39 @@ contract FrontierMultisig {
         return denialsRequired;
     }
 
-    function getPendingTransactions() public view returns (address[] memory, uint[] memory, bytes[] memory, bool[] memory, bool[] memory) {
-        uint pendingCount = 0;
-        for (uint i = 0; i < transactions.length; i++) {
-            if (!transactions[i].executed && !transactions[i].denied) {
-                pendingCount++;
-            }
+    function getPendingTransactions() public view returns (uint[] memory, address[] memory, uint[] memory, bytes[] memory, bool[] memory, bool[] memory) {
+    uint pendingCount = 0;
+    for (uint i = 0; i < transactions.length; i++) {
+        if (!transactions[i].executed && !transactions[i].denied) {
+            pendingCount++;
         }
-
-        address[] memory to = new address[](pendingCount);
-        uint[] memory value = new uint[](pendingCount);
-        bytes[] memory data = new bytes[](pendingCount);
-        bool[] memory executed = new bool[](pendingCount);
-        bool[] memory denied = new bool[](pendingCount);
-
-        uint currentIndex = 0;
-        for (uint i = 0; i < transactions.length; i++) {
-            if (!transactions[i].executed && !transactions[i].denied) {
-                to[currentIndex] = transactions[i].to;
-                value[currentIndex] = transactions[i].value;
-                data[currentIndex] = transactions[i].data;
-                executed[currentIndex] = transactions[i].executed;
-                denied[currentIndex] = transactions[i].denied;
-                currentIndex++;
-            }
-        }
-        return (to, value, data, executed, denied);
     }
 
+    uint[] memory indices = new uint[](pendingCount);
+    address[] memory to = new address[](pendingCount);
+    uint[] memory value = new uint[](pendingCount);
+    bytes[] memory data = new bytes[](pendingCount);
+    bool[] memory executed = new bool[](pendingCount);
+    bool[] memory denied = new bool[](pendingCount);
+
+    uint currentIndex = 0;
+    for (uint i = 0; i < transactions.length; i++) {
+        if (!transactions[i].executed && !transactions[i].denied) {
+            indices[currentIndex] = i;
+            to[currentIndex] = transactions[i].to;
+            value[currentIndex] = transactions[i].value;
+            data[currentIndex] = transactions[i].data;
+            executed[currentIndex] = transactions[i].executed;
+            denied[currentIndex] = transactions[i].denied;
+            currentIndex++;
+        } 
+    }
+    return (indices, to, value, data, executed, denied);
+}
+
+
     function getCompleteTransactions() public view returns (address[] memory, uint[] memory, bytes[] memory, bool[] memory, bool[] memory) {
-            uint completeCount = 0;
+        uint completeCount = 0;
         for (uint i = 0; i < transactions.length; i++) {
             if (transactions[i].executed || transactions[i].denied) {
                 completeCount++;
