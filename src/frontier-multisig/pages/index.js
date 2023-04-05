@@ -16,6 +16,7 @@ import {
 
 import Frontier from '../../artifacts/contracts/Frontier.sol/Frontier.json'
 import FrontierMultisig from '../../artifacts/contracts/FrontierMultisig.sol/FrontierMultisig.json'
+import Manage from './Manage.js';
 
 
 function IndexPage({ currentPage, activeWallet, setBalance, txCount, setTxCount }) {
@@ -27,7 +28,6 @@ function IndexPage({ currentPage, activeWallet, setBalance, txCount, setTxCount 
   const [completeTx, setCompleteTx] = useState([]);
   const [depositAmount, setDepositAmount] = useState("");
   const [errorMessage, setErrorMessage] = useState('');
-  // const [balance, setBalance] = useState("0");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [targetAddress, setTargetAddress] = useState("");
   const [owners, setOwners] = useState([]);
@@ -183,62 +183,6 @@ function IndexPage({ currentPage, activeWallet, setBalance, txCount, setTxCount 
   }
 
 
-  async function addOwner(newOwner) {
-    if (!activeWallet) {
-      alert("Please select an active wallet first.");
-      return;
-    }
-    await window.ethereum.request({ method: "eth_requestAccounts" });
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    const signer = await provider.getSigner();
-    const frontierMultisigContract = new ethers.Contract(activeWallet, FrontierMultisig.abi, signer);
-    console.log("Adding owner:", newOwner);
-    try {
-      const tx = await frontierMultisigContract.addOwner(newOwner);
-      const receipt = await tx.wait();
-      console.log("Add owner transaction receipt:", receipt);
-      fetchOwners();
-    } catch (error) {
-      console.error("Error adding owner:", error.message);
-    }
-  }
-  
-  async function removeOwner(ownerToRemove) {
-    if (!activeWallet) {
-      alert("Please select an active wallet first.");
-      return;
-    }
-    await window.ethereum.request({ method: "eth_requestAccounts" });
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    const signer = await provider.getSigner();
-    const frontierMultisigContract = new ethers.Contract(activeWallet, FrontierMultisig.abi, signer);
-    try {
-      const tx = await frontierMultisigContract.removeOwner(ownerToRemove);
-      const receipt = await tx.wait();
-      console.log("Remove owner transaction receipt:", receipt);
-      fetchOwners();
-    } catch (error) {
-      console.error("Error removing owner:", error.message);
-    }
-  }
-
-  async function fetchOwners() {
-    if (!activeWallet) {
-      alert("Please select an active wallet first.");
-      return;
-    }
-    await window.ethereum.request({ method: "eth_requestAccounts" });
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    const signer = await provider.getSigner();
-    const frontierMultisigContract = new ethers.Contract(activeWallet, FrontierMultisig.abi, signer);
-    try {
-      const owners = await frontierMultisigContract.getOwners();
-      setOwners(owners);
-    }
-    catch (error) {
-      console.error("Error fetching owners:", error.message);
-    }
-  }
 
   async function fetchRequiredApprovals() {
     if (!activeWallet) {
@@ -278,44 +222,6 @@ function IndexPage({ currentPage, activeWallet, setBalance, txCount, setTxCount 
     }
   }
 
-  async function changeApprovalsRequired() {
-    if (!activeWallet) {
-      alert("Please select an active wallet first.");
-      return;
-    }
-    await window.ethereum.request({ method: "eth_requestAccounts" });
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    const signer = await provider.getSigner();
-    const frontierMultisigContract = new ethers.Contract(activeWallet, FrontierMultisig.abi, signer);
-    try {
-      const tx = await frontierMultisigContract.changeApprovalsRequired(approvalsRequired);
-      const receipt = await tx.wait();
-      console.log("Change approvals required transaction receipt:", receipt);
-      fetchRequiredApprovals();
-    } catch (error) {
-      console.error("Error changing approvals required:", error.message);
-    }
-  }
-
-  async function changeDenialsRequired() {
-    if (!activeWallet) {
-      alert("Please select an active wallet first.");
-      return;
-    }
-    await window.ethereum.request({ method: "eth_requestAccounts" });
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    const signer = await provider.getSigner();
-    const frontierMultisigContract = new ethers.Contract(activeWallet, FrontierMultisig.abi, signer);
-    try {
-      const tx = await frontierMultisigContract.changeDenialsRequired(denialsRequired);
-      const receipt = await tx.wait();
-      console.log("Change denials required transaction receipt:", receipt);
-      fetchRequiredDenials();
-    } catch (error) {
-      console.error("Error changing denials required:", error.message);
-    }
-  }
-  
   function parseUnits(value) {
     const [integer, decimal] = value.split(".");
     const wei = integer + (decimal ? decimal.padEnd(18, "0") : "0".repeat(18));
@@ -360,6 +266,7 @@ function IndexPage({ currentPage, activeWallet, setBalance, txCount, setTxCount 
   
     return (
       <main className={`${styles.main} grid grid-cols-1 gap-8 rounded-lg`}>
+
         {currentPage === 'page1' ? (
           <MultisigWallet activeWallet={activeWallet} depositAmount={depositAmount} setBalance={setBalance} txCount={txCount} setTxCount={setTxCount} errorMessage={errorMessage} />)        
         : null}
@@ -373,81 +280,8 @@ function IndexPage({ currentPage, activeWallet, setBalance, txCount, setTxCount 
         ) : null}
 
         {currentPage === 'page4' ? (
-          <div className="mt-4">
-          <input
-              type="text"
-              id="owner address"
-              className="w-full px-2 py-1 rounded-md border border-gray-400 mb-4 text-gray-800"
-              style={{ maxWidth: '400px' }}
-              value={targetAddress}
-              onChange={(e) => setTargetAddress(e.target.value)}
-            />
-            <button
-              onClick={() => addOwner(targetAddress)}
-              className="bg-white text-blue-500 py-2 px-4 rounded shadow"
-            >Add owner</button>
-            <button
-              onClick={() => removeOwner(targetAddress)}
-              className="bg-white text-blue-500 py-2 px-4 rounded shadow"
-            >Remove owner</button>
-            
-            <button
-              onClick={() => {
-                fetchOwners();
-                fetchRequiredApprovals();
-                fetchRequiredDenials();
-              }}
-              className="bg-white text-blue-500 py-2 px-4 rounded shadow"
-            >Refresh</button>
-  
-            <div>
-              <p className="text-gray-200">Owners:</p>
-              <ul className="divide-y divide-gray-200">
-                {owners.map((owner, index) => (
-                  <li key={index} className="p-4">
-                    <div className="flex justify-between items-center">
-                      <div className="text-gray-800">
-                        <p className="font-semibold">{owner}</p>
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <div>
-                <p className="text-gray-200">Required approvals: {displayedApprovals.toString()}</p>
-                <input
-                  type="integer"
-                  id="approvals required"
-                  className="w-full px-2 py-1 rounded-md border border-gray-400 mb-4 text-gray-800"
-                  style={{ maxWidth: '400px' }}
-                  value={approvalsRequired}
-                  onChange={(e) => setApprovalsRequired(e.target.value)}
-                />
-                <button
-                  onClick={() => changeApprovalsRequired(approvalsRequired)}
-                  className="bg-white text-blue-500 py-2 px-4 rounded shadow"
-                >Change</button>
-              </div>
-              <div>
-                <p className="text-gray-200">Required denials: {displayedDenials.toString()}</p>
-                <input
-                  type="integer"
-                  id="denials required"
-                  className="w-full px-2 py-1 rounded-md border border-gray-400 mb-4 text-gray-800"
-                  style={{ maxWidth: '400px' }}
-                  value={denialsRequired}
-                  onChange={(e) => setDenialsRequired(e.target.value)}
-                />
-                <button
-                  onClick={() => changeDenialsRequired(denialsRequired)}
-                  className="bg-white text-blue-500 py-2 px-4 rounded shadow"
-                >Change</button>
-              </div>
-            </div>
-        </div>
-      ) : null}
+         <Manage activeWallet={activeWallet} ></Manage>
+        ) : null}
 
     </main>
   );

@@ -108,62 +108,70 @@ function MultisigWallet( {activeWallet, setBalance, setTxCount } ) {
     }
   }, [activeWallet]);
   
-
   return (
-      <div className="text-white p-8 rounded-xl w-full">
-        <div className="grid grid-cols-1 divide-x-2 divide-blue-300 md:grid-cols-2 gap-4 md:gap-8">
-          <div className="space-y-4">
-          <h1 className="text-3xl font-bold mb-8 text-center">Create Transaction</h1>
-            <div>
-              <label htmlFor="address" className="block mb-2 font-semibold">Address:</label>
-              <input
-                onChange={(e) => setAddressToSend(e.target.value)}
-                className="w-full px-3 py-2 rounded-md border border-indigo-300 mb-4 text-gray-800 bg-white focus:ring-2 focus:ring-indigo-200 focus:border-transparent"
-                style={{ maxWidth: "400px" }}
-              />
-            </div>
-            <div>
-              <label htmlFor="amount" className="block mb-2 font-semibold">Amount:</label>
-              <input
-                onChange={(e) => setAmountToSend(e.target.value)}
-                className="w-full px-3 py-2 rounded-md border border-indigo-300 mb-4 text-gray-800 bg-white focus:ring-2 focus:ring-indigo-200 focus:border-transparent"
-                style={{ maxWidth: "400px" }}
-              />
-            </div>
-            <div>
-              <label htmlFor="tag" className="block mb-2 font-semibold">Transaction Tag:</label>
-              <input
-                onChange={(e) => setTag(e.target.value)}
-                className="w-full px-3 py-2 rounded-md border border-indigo-300 mb-4 text-gray-800 bg-white focus:ring-2 focus:ring-indigo-200 focus:border-transparent"
-                style={{ maxWidth: "400px" }}
-              />
-            </div>
-            <button
-              onClick={() => submitTransaction(addressToSend, amountToSend)}
-              className="px-6 py-2 bg-indigo-500 text-white font-semibold rounded-md hover:bg-indigo-600 transition-colors duration-300 ease-in-out"
-            >
-              Submit transaction
-            </button>
+    <div className="mx-auto w-full p-6">
+      <h2 className="text-2xl text-gray-200 font-semibold mb-5">Create Transaction</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
+        <div className="bg-white rounded-lg shadow p-6 space-y-4">
+          <h3 className="text-xl text-gray-800 font-semibold mb-4">Submit Transaction</h3>
+          <div>
+            <label htmlFor="address" className="block mb-2 font-semibold text-gray-800">Address:</label>
+            <input
+              onChange={(e) => setAddressToSend(e.target.value)}
+              className="w-full px-3 py-2 rounded-md border border-gray-300 mb-4 text-gray-800 focus:ring-2 focus:ring-indigo-200 focus:border-transparent"
+              style={{ maxWidth: "400px" }}
+            />
           </div>
-          <div className="flex justify-center items-center">
-            <label htmlFor="depositAmount" className="block text-center font-semibold">Deposit Amount (ETH):</label>
+          <div>
+            <label htmlFor="amount" className="block mb-2 font-semibold text-gray-800">Amount:</label>
+            <input
+              onChange={(e) => setAmountToSend(e.target.value)}
+              className="w-full px-3 py-2 rounded-md border border-gray-300 mb-4 text-gray-800 focus:ring-2 focus:ring-indigo-200 focus:border-transparent"
+              style={{ maxWidth: "400px" }}
+            />
+          </div>
+          <div>
+            <label htmlFor="tag" className="block mb-2 font-semibold text-gray-800">Transaction Tag:</label>
+            <input
+              onChange={(e) => setTag(e.target.value)}
+              className="w-full px-3 py-2 rounded-md border border-gray-300 mb-4 text-gray-800 focus:ring-2 focus:ring-indigo-200 focus:border-transparent"
+              style={{ maxWidth: "400px" }}
+            />
+          </div>
+          <button
+            onClick={() => submitTransaction(addressToSend, amountToSend)}
+            className="px-6 py-2 bg-indigo-500 text-white font-semibold rounded-md hover:bg-indigo-600 transition-colors duration-300 ease-in-out"
+          >
+            Submit transaction
+          </button>
+        </div>
+        <div className="bg-white h-[52%] rounded-lg shadow p-6">
+          <h3 className="text-xl text-gray-800 font-semibold mb-4">Deposit</h3>
+          <div className="flex flex-col">
+            <label htmlFor="depositAmount" className="block font-semibold text-gray-800 mb-4">Deposit Amount (ETH):</label>
             <input
               type="text"
               id="depositAmount"
-              className="ml-2 p-2 rounded-md border border-indigo-300 text-gray-800 bg-white focus:ring-2 focus:ring-indigo-200 focus:border-transparent w-40"
+              className="mt-2 p-2 rounded-md border border-gray-300 text-gray-800 mb-4"
               value={depositAmount}
               onChange={(e) => setDepositAmount(e.target.value)}
+              style={{ maxWidth: "400px" }}
             />
-            <button
-              onClick={() => depositToMultisig()}
-              className="px-6 py-2 bg-indigo-500 text-white font-semibold rounded-md hover:bg-indigo-600 transition-colors duration-300 ease-in-out"
-            >
-              Deposit
-            </button>
+            <div className="w-40">
+              <button
+                onClick={() => depositToMultisig()}
+                className="w-full px-6 py-2 bg-indigo-500 text-white font-semibold rounded-md hover:bg-indigo-600 transition-colors duration-300 ease-in-out"
+              >
+                Deposit
+              </button>
+            </div>
           </div>
         </div>
+
       </div>
+    </div>
   );
+  
   
 
   
