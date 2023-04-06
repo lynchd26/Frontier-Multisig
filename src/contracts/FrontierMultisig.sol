@@ -15,7 +15,7 @@ contract FrontierMultisig {
 
     // Events
     event Deposit(address indexed sender, uint value);
-    event SubmitTransaction(address indexed owner, uint indexed txIndex, address indexed to, uint value, bytes data);
+    event SubmitTransaction(address indexed owner, uint indexed txIndex, address indexed to, uint value, bytes data, string title, string description);
     event ApproveTransaction(address indexed owner, uint indexed txIndex);
     event RevokeTransaction(address indexed owner, uint indexed txIndex);
     event ExecuteTransaction(address indexed owner, uint indexed txIndex);
@@ -33,6 +33,8 @@ contract FrontierMultisig {
         bytes data;
         bool executed;
         bool denied;
+        string title;
+        string description;
     }
     
     /* Make sure the owners added in the constructor can't be removed */
@@ -51,18 +53,20 @@ contract FrontierMultisig {
 
 
     /* Function to submit a transaction to the contract */
-    function submitTransaction(address to, uint value, bytes memory data) public {
-        require(isOwner[msg.sender], "User is not an owner");   // Must be an owner to submit tx
-        uint txIndex = transactions.length;
-        transactions.push(Transaction({
-            to: to,
-            value: value,
-            data: data,
-            executed: false,
-            denied: false
-        }));
-        emit SubmitTransaction(msg.sender, txIndex, to, value, data);
-    }
+    function submitTransaction(address to, uint value, bytes memory data, string memory title, string memory description) public {
+    require(isOwner[msg.sender], "User is not an owner");   // Must be an owner to submit tx
+    uint txIndex = transactions.length;
+    transactions.push(Transaction({
+        to: to,
+        value: value,
+        data: data,
+        executed: false,
+        denied: false,
+        title: title,
+        description: description
+    }));
+    emit SubmitTransaction(msg.sender, txIndex, to, value, data, title, description);
+}
 
     /* Function to approve a transaction */
     function approveTransaction(uint txIndex) public {
@@ -196,7 +200,7 @@ contract FrontierMultisig {
         return denialsRequired;
     }
 
-    function getPendingTransactions() public view returns (address[] memory, uint[] memory, bytes[] memory, bool[] memory, bool[] memory) {
+    function getPendingTransactions() public view returns (address[] memory, uint[] memory, bytes[] memory, bool[] memory, bool[] memory, string[] memory, string[] memory) {
         uint pendingCount = 0;
         for (uint i = 0; i < transactions.length; i++) {
             if (!transactions[i].executed && !transactions[i].denied) {
@@ -218,10 +222,12 @@ contract FrontierMultisig {
                 data[currentIndex] = transactions[i].data;
                 executed[currentIndex] = transactions[i].executed;
                 denied[currentIndex] = transactions[i].denied;
+                title[currentIndex] = transactions[i].title;
+                description[currentIndex] = transactions[i].description;
                 currentIndex++;
             }
         }
-        return (to, value, data, executed, denied);
+        return (to, value, data, executed, denied, title, description);
     }
 
 
