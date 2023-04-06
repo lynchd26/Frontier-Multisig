@@ -74,9 +74,6 @@ contract FrontierMultisig {
         require(!approvals[txIndex][msg.sender], "User has already approved this transaction");     // Don't allow duplicate approvals
         if (denials[txIndex][msg.sender] == true) {
             revokeTransaction(txIndex);                                                 // call revokeTransaction if already denied
-        }                                                                                     
-        if (isOriginalOwner[msg.sender]) {                                             // if original owner approves a transaction, approve it
-            executeTransaction(txIndex);
         }
         approvals[txIndex][msg.sender] = true;                                                      // Set approval from the owner to true
         uint currentApprovals = getTransactionApprovals(txIndex);
@@ -98,9 +95,6 @@ contract FrontierMultisig {
         uint requiredDenials = denialsRequired;
         if (currentDenials >= requiredDenials) {
             transactions[txIndex].denied = true;                                                // call executeTransaction if approvals are met
-        }
-         if (isOriginalOwner[msg.sender]) {                                               // if original owner denies a transaction, deny it
-            transactions[txIndex].denied = true;
         }
         emit DenyTransaction(msg.sender, txIndex);
 
@@ -186,7 +180,7 @@ contract FrontierMultisig {
         return owners;
     }
 
-    function getOriginalowners() public view returns (address[] memory) {
+    function getOriginalOwners() public view returns (address[] memory) {
         return originalOwners;
     }
 
@@ -213,6 +207,8 @@ contract FrontierMultisig {
         bytes[] memory data = new bytes[](pendingCount);
         bool[] memory executed = new bool[](pendingCount);
         bool[] memory denied = new bool[](pendingCount);
+        string[] memory title = new string[](pendingCount);
+        string[] memory description = new string[](pendingCount);
 
         uint currentIndex = 0;
         for (uint i = 0; i < transactions.length; i++) {
