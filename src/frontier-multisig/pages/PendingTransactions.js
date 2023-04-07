@@ -3,14 +3,12 @@ import window from 'global'
 import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
-
 import FrontierMultisig from '../../artifacts/contracts/FrontierMultisig.sol/FrontierMultisig.json'
+import Transaction from './Transaction';
 
 function PendingTransactions({ activeWallet, setTxCount }) {
-    const [isRefreshing, setIsRefreshing] = useState(false);
-    const [pendingTx, setPendingTx] = useState([]);
-
-
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [pendingTx, setPendingTx] = useState([]);
 
   async function fetchPendingTransactions() {
     if (!activeWallet) {
@@ -25,12 +23,14 @@ function PendingTransactions({ activeWallet, setTxCount }) {
     
     const pendingTransactions = pendingTransactionsResult[1].map((to, index) => {
       return {
-        txId: pendingTransactionsResult[0][index],
-        to,
-        value: pendingTransactionsResult[2][index],
-        data: pendingTransactionsResult[3][index],
-        executed: pendingTransactionsResult[4][index],
-        denied: pendingTransactionsResult[5][index],
+        txId: index,
+        to: pendingTransactionsResult[0][index],
+        value: pendingTransactionsResult[1][index],
+        data: pendingTransactionsResult[2][index],
+        executed: pendingTransactionsResult[3][index],
+        denied: pendingTransactionsResult[4][index],
+        title: pendingTransactionsResult[5][index],
+        description: pendingTransactionsResult[6][index],
       };      
     });
     console.log("Pending transactions:", pendingTransactions);
@@ -99,18 +99,7 @@ function PendingTransactions({ activeWallet, setTxCount }) {
 
   
   
-  function parseUnitsBack(wei, decimals = 18) {
-    try {
-      const weiBigInt = BigInt(wei);
-      const factorBigInt = BigInt(10) ** BigInt(decimals);
-      const etherBigInt = weiBigInt / factorBigInt;
-      const remainderBigInt = weiBigInt % factorBigInt;
-      const ether = Number(etherBigInt) + Number(remainderBigInt) / Number(factorBigInt);
-      return ether;
-    } catch (error) {
-      console.log("Error parsing units back:", error.message);
-    }
-  } 
+
 
   useEffect(() => {
     if (activeWallet) {
@@ -131,9 +120,11 @@ function PendingTransactions({ activeWallet, setTxCount }) {
     await Promise.all([fetchPromise, spinTimeout]);
     setIsRefreshing(false);
   };
+
+
   return (
 
-    <div className="mx-auto w-full p-6 h-full">
+    <div className="mx-auto w-full p-6">
       <div className="flex justify-between items-center mb-5">
         <h2 className="text-2xl text-gray-200 font-semibold">Pending Transactions</h2>
         <button
@@ -158,10 +149,7 @@ function PendingTransactions({ activeWallet, setTxCount }) {
               return (
                 <li key={index} className="p-4">
                   <div className="flex justify-between items-center">
-                    <div className="text-gray-800">
-                      <p className="font-semibold">Amount: {parseUnitsBack(item.value)}</p>
-                      <p className='text-violet-500'>To: {item.to}</p>
-                    </div>
+                  <Transaction item={item} />
                     <div className="flex items-center pl-8 space-x-4">
                       <p className="text-gray-600">{`${approved}/${approvalsReq}`}</p>
                       <button

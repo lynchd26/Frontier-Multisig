@@ -9,6 +9,8 @@ function MultisigWallet( {activeWallet, setBalance, setTxCount } ) {
   const [depositAmount, setDepositAmount] = useState("");
   const [addressToSend, setAddressToSend] = useState('');
   const [amountToSend, setAmountToSend] = useState('');
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   
   async function fetchBalance() {
@@ -36,7 +38,7 @@ function MultisigWallet( {activeWallet, setBalance, setTxCount } ) {
     const frontierMultisigContract = new ethers.Contract(activeWallet, FrontierMultisig.abi, signer);
     try {
         console.log("to: " + addressToSend, "value: " + parseUnits(amountToSend));
-        const tx = await frontierMultisigContract.submitTransaction(addressToSend, parseUnits(amountToSend), "0x");
+        const tx = await frontierMultisigContract.submitTransaction(addressToSend, parseUnits(amountToSend), "0x", title, description);
         const receipt = await tx.wait();
         console.log("Transaction receipt:", receipt);
         setTxCount((txCount) => txCount + 1);
@@ -131,9 +133,15 @@ function MultisigWallet( {activeWallet, setBalance, setTxCount } ) {
             />
           </div>
           <div>
-            <label htmlFor="tag" className="block mb-2 font-semibold text-gray-800">Transaction Tag:</label>
+            <label htmlFor="title" className="block mb-2 font-semibold text-gray-800">Transaction Title:</label>
             <input
-              onChange={(e) => setTag(e.target.value)}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full px-3 py-2 rounded-md border border-gray-300 mb-4 text-gray-800 focus:ring-2 focus:ring-indigo-200 focus:border-transparent"
+              style={{ maxWidth: "400px" }}
+            />
+            <label htmlFor="description" className="block mb-2 font-semibold text-gray-800">Description:</label>
+            <input
+              onChange={(e) => setDescription(e.target.value)}
               className="w-full px-3 py-2 rounded-md border border-gray-300 mb-4 text-gray-800 focus:ring-2 focus:ring-indigo-200 focus:border-transparent"
               style={{ maxWidth: "400px" }}
             />

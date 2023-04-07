@@ -197,7 +197,7 @@ contract FrontierMultisig {
     function getPendingTransactions() public view returns (address[] memory, uint[] memory, bytes[] memory, bool[] memory, bool[] memory, string[] memory, string[] memory) {
         uint pendingCount = 0;
         for (uint i = 0; i < transactions.length; i++) {
-            if (transactions[i].executed || transactions[i].denied) {
+            if (!transactions[i].executed && !transactions[i].denied) {
                 pendingCount++;
             }
         }
@@ -209,6 +209,38 @@ contract FrontierMultisig {
         bool[] memory denied = new bool[](pendingCount);
         string[] memory title = new string[](pendingCount);
         string[] memory description = new string[](pendingCount);
+
+        uint currentIndex = 0;
+        for (uint i = 0; i < transactions.length; i++) {
+            if (!transactions[i].executed && !transactions[i].denied) {
+                to[currentIndex] = transactions[i].to;
+                value[currentIndex] = transactions[i].value;
+                data[currentIndex] = transactions[i].data;
+                executed[currentIndex] = transactions[i].executed;
+                denied[currentIndex] = transactions[i].denied;
+                title[currentIndex] = transactions[i].title;
+                description[currentIndex] = transactions[i].description;
+                currentIndex++;
+            }
+        }
+        return (to, value, data, executed, denied, title, description);
+    }
+
+     function getCompleteTransactions() public view returns (address[] memory, uint[] memory, bytes[] memory, bool[] memory, bool[] memory, string[] memory, string[] memory) {
+        uint completeCount = 0;
+        for (uint i = 0; i < transactions.length; i++) {
+            if (transactions[i].executed || transactions[i].denied) {
+                completeCount++;
+            }
+        }
+
+        address[] memory to = new address[](completeCount);
+        uint[] memory value = new uint[](completeCount);
+        bytes[] memory data = new bytes[](completeCount);
+        bool[] memory executed = new bool[](completeCount);
+        bool[] memory denied = new bool[](completeCount);
+        string[] memory title = new string[](completeCount);
+        string[] memory description = new string[](completeCount);
 
         uint currentIndex = 0;
         for (uint i = 0; i < transactions.length; i++) {
@@ -225,6 +257,7 @@ contract FrontierMultisig {
         }
         return (to, value, data, executed, denied, title, description);
     }
+
 
     /* Function to change the number of approvals required */
     function changeApprovalsRequired(uint _approvalsRequired) public {

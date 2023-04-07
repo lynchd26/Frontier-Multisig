@@ -1,0 +1,23 @@
+.transactionContainer {
+  overflow: hidden;
+  transition: max-height 0.5s ease-in-out;
+  max-height: 50px;
+}
+
+.transactionContainer.expanded {
+  max-height: 300px;
+}
+
+.seeMoreButton {
+  position: relative;
+  display: inline-block;
+}
+
+.expandedContent {
+  max-height: 0;
+  transition: max-height 0.3s ease;
+}
+
+.expanded .expandedContent {
+  max-height: 200px;
+}
