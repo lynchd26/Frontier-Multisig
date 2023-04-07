@@ -133,7 +133,7 @@ function PendingTransactions({ activeWallet, setTxCount }) {
   };
   return (
 
-    <div className="mx-auto w-full p-6">
+    <div className="mx-auto w-full p-6 h-full">
       <div className="flex justify-between items-center mb-5">
         <h2 className="text-2xl text-gray-200 font-semibold">Pending Transactions</h2>
         <button
