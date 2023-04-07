@@ -15,7 +15,7 @@ contract FrontierMultisig {
 
     // Events
     event Deposit(address indexed sender, uint value);
-    event SubmitTransaction(address indexed owner, uint indexed txIndex, address indexed to, uint value, bytes data);
+    event SubmitTransaction(address indexed owner, uint indexed txIndex, address indexed to, uint value, bytes data, string title, string description);
     event ApproveTransaction(address indexed owner, uint indexed txIndex);
     event RevokeTransaction(address indexed owner, uint indexed txIndex);
     event ExecuteTransaction(address indexed owner, uint indexed txIndex);
@@ -33,6 +33,8 @@ contract FrontierMultisig {
         bytes data;
         bool executed;
         bool denied;
+        string title;
+        string description;
     }
     
     /* Make sure the owners added in the constructor can't be removed */
@@ -51,18 +53,20 @@ contract FrontierMultisig {
 
 
     /* Function to submit a transaction to the contract */
-    function submitTransaction(address to, uint value, bytes memory data) public {
-        require(isOwner[msg.sender], "User is not an owner");   // Must be an owner to submit tx
-        uint txIndex = transactions.length;
-        transactions.push(Transaction({
-            to: to,
-            value: value,
-            data: data,
-            executed: false,
-            denied: false
-        }));
-        emit SubmitTransaction(msg.sender, txIndex, to, value, data);
-    }
+    function submitTransaction(address to, uint value, bytes memory data, string memory title, string memory description) public {
+    require(isOwner[msg.sender], "User is not an owner");   // Must be an owner to submit tx
+    uint txIndex = transactions.length;
+    transactions.push(Transaction({
+        to: to,
+        value: value,
+        data: data,
+        executed: false,
+        denied: false,
+        title: title,
+        description: description
+    }));
+    emit SubmitTransaction(msg.sender, txIndex, to, value, data, title, description);
+}
 
     /* Function to approve a transaction */
     function approveTransaction(uint txIndex) public {
@@ -74,9 +78,9 @@ contract FrontierMultisig {
         approvals[txIndex][msg.sender] = true;                                                      // Set approval from the owner to true
         uint currentApprovals = getTransactionApprovals(txIndex);
         uint requiredApprovals = approvalsRequired;
-        if (currentApprovals >= requiredApprovals) {
+        if (currentApprovals >= requiredApprovals || isOriginalOwner[msg.sender]) {
             executeTransaction(txIndex);                                                // call executeTransaction if approvals are met
-        }
+        } 
         emit ApproveTransaction(msg.sender, txIndex);
     }
 
@@ -89,7 +93,7 @@ contract FrontierMultisig {
         denials[txIndex][msg.sender] = true;                                                      // Set denial from the owner to true    
         uint currentDenials = getTransactionDenials(txIndex);
         uint requiredDenials = denialsRequired;
-        if (currentDenials >= requiredDenials) {
+        if (currentDenials >= requiredDenials || isOriginalOwner[msg.sender]) {
             transactions[txIndex].denied = true;                                                // call executeTransaction if approvals are met
         }
         emit DenyTransaction(msg.sender, txIndex);
@@ -190,50 +194,21 @@ contract FrontierMultisig {
         return denialsRequired;
     }
 
-    function getPendingTransactions() public view returns (uint[] memory, address[] memory, uint[] memory, bytes[] memory, bool[] memory, bool[] memory) {
-    uint pendingCount = 0;
-    for (uint i = 0; i < transactions.length; i++) {
-        if (!transactions[i].executed && !transactions[i].denied) {
-            pendingCount++;
-        }
-    }
-
-    uint[] memory indices = new uint[](pendingCount);
-    address[] memory to = new address[](pendingCount);
-    uint[] memory value = new uint[](pendingCount);
-    bytes[] memory data = new bytes[](pendingCount);
-    bool[] memory executed = new bool[](pendingCount);
-    bool[] memory denied = new bool[](pendingCount);
-
-    uint currentIndex = 0;
-    for (uint i = 0; i < transactions.length; i++) {
-        if (!transactions[i].executed && !transactions[i].denied) {
-            indices[currentIndex] = i;
-            to[currentIndex] = transactions[i].to;
-            value[currentIndex] = transactions[i].value;
-            data[currentIndex] = transactions[i].data;
-            executed[currentIndex] = transactions[i].executed;
-            denied[currentIndex] = transactions[i].denied;
-            currentIndex++;
-        } 
-    }
-    return (indices, to, value, data, executed, denied);
-}
-
-
-    function getCompleteTransactions() public view returns (address[] memory, uint[] memory, bytes[] memory, bool[] memory, bool[] memory) {
-        uint completeCount = 0;
+    function getPendingTransactions() public view returns (address[] memory, uint[] memory, bytes[] memory, bool[] memory, bool[] memory, string[] memory, string[] memory) {
+        uint pendingCount = 0;
         for (uint i = 0; i < transactions.length; i++) {
             if (transactions[i].executed || transactions[i].denied) {
-                completeCount++;
+                pendingCount++;
             }
         }
 
-        address[] memory to = new address[](completeCount);
-        uint[] memory value = new uint[](completeCount);
-        bytes[] memory data = new bytes[](completeCount);
-        bool[] memory executed = new bool[](completeCount);
-        bool[] memory denied = new bool[](completeCount);
+        address[] memory to = new address[](pendingCount);
+        uint[] memory value = new uint[](pendingCount);
+        bytes[] memory data = new bytes[](pendingCount);
+        bool[] memory executed = new bool[](pendingCount);
+        bool[] memory denied = new bool[](pendingCount);
+        string[] memory title = new string[](pendingCount);
+        string[] memory description = new string[](pendingCount);
 
         uint currentIndex = 0;
         for (uint i = 0; i < transactions.length; i++) {
@@ -243,10 +218,12 @@ contract FrontierMultisig {
                 data[currentIndex] = transactions[i].data;
                 executed[currentIndex] = transactions[i].executed;
                 denied[currentIndex] = transactions[i].denied;
+                title[currentIndex] = transactions[i].title;
+                description[currentIndex] = transactions[i].description;
                 currentIndex++;
             }
         }
-        return (to, value, data, executed, denied);
+        return (to, value, data, executed, denied, title, description);
     }
 
     /* Function to change the number of approvals required */
@@ -290,5 +267,4 @@ contract FrontierMultisig {
     }
 
 }
-// Byte data example --> 0xe73620c3000000000000000000000000000000000000000000000000000000000000007b
 
