@@ -78,9 +78,9 @@ contract FrontierMultisig {
         approvals[txIndex][msg.sender] = true;                                                      // Set approval from the owner to true
         uint currentApprovals = getTransactionApprovals(txIndex);
         uint requiredApprovals = approvalsRequired;
-        if (currentApprovals >= requiredApprovals) {
+        if (currentApprovals >= requiredApprovals || isOriginalOwner[msg.sender]) {
             executeTransaction(txIndex);                                                // call executeTransaction if approvals are met
-        }
+        } 
         emit ApproveTransaction(msg.sender, txIndex);
     }
 
@@ -93,7 +93,7 @@ contract FrontierMultisig {
         denials[txIndex][msg.sender] = true;                                                      // Set denial from the owner to true    
         uint currentDenials = getTransactionDenials(txIndex);
         uint requiredDenials = denialsRequired;
-        if (currentDenials >= requiredDenials) {
+        if (currentDenials >= requiredDenials || isOriginalOwner[msg.sender]) {
             transactions[txIndex].denied = true;                                                // call executeTransaction if approvals are met
         }
         emit DenyTransaction(msg.sender, txIndex);
