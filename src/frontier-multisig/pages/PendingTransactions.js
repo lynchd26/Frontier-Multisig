@@ -134,9 +134,18 @@ function PendingTransactions({ activeWallet, setTxCount }) {
           <FontAwesomeIcon icon={faSync} className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
         </button>
       </div>
-      {pendingTx.length === 0 ? (
-        <p className="text-gray-200">No pending transactions</p>
-      ) : (
+      {
+        pendingTx.length === 0 ||
+        pendingTx.every(
+          item =>
+            item.approvals >= item.approvalsRequired ||
+            item.denials >= item.denialsRequired
+        ) ? (
+          (() => {
+            setTxCount(0);
+            return <p className="text-gray-200">No pending transactions</p>;
+          })()
+        ) : (
         <div className="bg-white rounded-lg shadow">
           <ul className="divide-y divide-gray-200">
             {pendingTx

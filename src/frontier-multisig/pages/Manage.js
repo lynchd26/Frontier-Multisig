@@ -152,24 +152,24 @@ function Manage( {activeWallet} ) {
 
       
     const handleRefreshClick = async () => {
-        setIsRefreshing(true);
-        const fetchPromise1 = fetchOwners();
-        const fetchPromise2 = fetchRequiredApprovals();
-        const fetchPromise3 = fetchRequiredDenials();
-      
-        const minSpinTime = 1000;
-      
-        const spinTimeout = new Promise((resolve) => {
-          setTimeout(resolve, minSpinTime);
-        });
-      
-        await Promise.all([fetchPromise1, fetchPromise2, fetchPromise3, spinTimeout]);
-        setIsRefreshing(false);
-      };
-      
-        useEffect(() => {
-            handleRefreshClick();
-        }, [activeWallet]);
+      setIsRefreshing(true);
+      const fetchPromise1 = fetchOwners();
+      const fetchPromise2 = fetchRequiredApprovals();
+      const fetchPromise3 = fetchRequiredDenials();
+    
+      const minSpinTime = 1000;
+    
+      const spinTimeout = new Promise((resolve) => {
+        setTimeout(resolve, minSpinTime);
+      });
+    
+      await Promise.all([fetchPromise1, fetchPromise2, fetchPromise3, spinTimeout]);
+      setIsRefreshing(false);
+    };
+    
+    useEffect(() => {
+        handleRefreshClick();
+    }, [activeWallet]);
 
 
     return (

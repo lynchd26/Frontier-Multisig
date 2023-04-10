@@ -17,7 +17,8 @@ function Transaction({ item, approveTransaction, denyTransaction, index }) {
       const ether = Number(etherBigInt) + Number(remainderBigInt) / Number(factorBigInt);
       return ether;
     } catch (error) {
-      console.log("Error parsing units back:", error.message);
+      console.log("Error parsing units back xopxxo:", error.message);
+      return null;
     }
   }
 
