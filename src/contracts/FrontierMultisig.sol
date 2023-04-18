@@ -37,6 +37,18 @@ contract FrontierMultisig {
         string description;
     }
     
+    struct PendingTransaction {
+        uint256 transactionIndex;
+        address to;
+        uint256 value;
+        bytes data;
+        bool executed;
+        bool denied;
+        string title;
+        string description;
+    }
+
+
     /* Make sure the owners added in the constructor can't be removed */
     constructor (address owner) {
         require(owner != address(0), "owner is the zero address");
@@ -134,7 +146,6 @@ contract FrontierMultisig {
     /* Function to execute a transaction */
     function executeTransaction(uint txIndex) public payable {
         require(isOwner[msg.sender], "User is not an owner");                                                           // Must be an owner to execute tx
-        // require(getTransactionApprovals(txIndex) >= 2, "Transaction has not been approved by enough owners");      // Number of approvals must be greater than the set requirement
         require(!transactions[txIndex].executed, "Transaction has already been executed");                              // Don't allow duplicate executions
         require(!transactions[txIndex].denied, "Transaction has been denied");                                        // Don't allow execution if transaction has been denied
         transactions[txIndex].executed = true;
@@ -194,7 +205,7 @@ contract FrontierMultisig {
         return denialsRequired;
     }
 
-    function getPendingTransactions() public view returns (address[] memory, uint[] memory, bytes[] memory, bool[] memory, bool[] memory, string[] memory, string[] memory) {
+    function getPendingTransactions() public view returns (PendingTransaction[] memory) {
         uint pendingCount = 0;
         for (uint i = 0; i < transactions.length; i++) {
             if (!transactions[i].executed && !transactions[i].denied) {
@@ -202,31 +213,30 @@ contract FrontierMultisig {
             }
         }
 
-        address[] memory to = new address[](pendingCount);
-        uint[] memory value = new uint[](pendingCount);
-        bytes[] memory data = new bytes[](pendingCount);
-        bool[] memory executed = new bool[](pendingCount);
-        bool[] memory denied = new bool[](pendingCount);
-        string[] memory title = new string[](pendingCount);
-        string[] memory description = new string[](pendingCount);
+        PendingTransaction[] memory pendingTransactions = new PendingTransaction[](pendingCount);
 
         uint currentIndex = 0;
         for (uint i = 0; i < transactions.length; i++) {
             if (!transactions[i].executed && !transactions[i].denied) {
-                to[currentIndex] = transactions[i].to;
-                value[currentIndex] = transactions[i].value;
-                data[currentIndex] = transactions[i].data;
-                executed[currentIndex] = transactions[i].executed;
-                denied[currentIndex] = transactions[i].denied;
-                title[currentIndex] = transactions[i].title;
-                description[currentIndex] = transactions[i].description;
+                pendingTransactions[currentIndex] = PendingTransaction({
+                    transactionIndex: i,
+                    to: transactions[i].to,
+                    value: transactions[i].value,
+                    data: transactions[i].data,
+                    executed: transactions[i].executed,
+                    denied: transactions[i].denied,
+                    title: transactions[i].title,
+                    description: transactions[i].description
+                });
                 currentIndex++;
             }
         }
-        return (to, value, data, executed, denied, title, description);
+        return pendingTransactions;
     }
 
-     function getCompleteTransactions() public view returns (address[] memory, uint[] memory, bytes[] memory, bool[] memory, bool[] memory, string[] memory, string[] memory) {
+
+
+    function getCompleteTransactions() public view returns (address[] memory, uint[] memory, bytes[] memory, bool[] memory, bool[] memory, string[] memory, string[] memory) {
         uint completeCount = 0;
         for (uint i = 0; i < transactions.length; i++) {
             if (transactions[i].executed || transactions[i].denied) {

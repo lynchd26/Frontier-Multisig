@@ -20,43 +20,51 @@ function PendingTransactions({ activeWallet, setTxCount }) {
     const signer = await provider.getSigner();
     const frontierMultisigContract = new ethers.Contract(activeWallet, FrontierMultisig.abi, signer);
     const pendingTransactionsResult = await frontierMultisigContract.getPendingTransactions();
-    
-    const pendingTransactions = pendingTransactionsResult[1].map((to, index) => {
+
+    const pendingTransactions = pendingTransactionsResult.map((pendingTransaction) => {
       return {
-        txId: index,
-        to: pendingTransactionsResult[0][index],
-        value: pendingTransactionsResult[1][index],
-        data: pendingTransactionsResult[2][index],
-        executed: pendingTransactionsResult[3][index],
-        denied: pendingTransactionsResult[4][index],
-        title: pendingTransactionsResult[5][index],
-        description: pendingTransactionsResult[6][index],
-      };      
+        transactionIndex: pendingTransaction.transactionIndex,
+        to: pendingTransaction.to,
+        value: pendingTransaction.value,
+        data: pendingTransaction.data,
+        executed: pendingTransaction.executed,
+        denied: pendingTransaction.denied,
+        title: pendingTransaction.title,
+        description: pendingTransaction.description,
+      };
     });
     console.log("Pending transactions:", pendingTransactions);
-    const pendingTxWithDetails = await Promise.all(
-      pendingTransactions.map(async (tx, index) => {
-        const approvals = await frontierMultisigContract.getTransactionApprovals(index);
-        const denials = await frontierMultisigContract.getTransactionDenials(index);
-        const approvalsRequired = await frontierMultisigContract.getApprovalsRequired();
-        const denialsRequired = await frontierMultisigContract.getDenialsRequired();
-  
-        console.log("Approvals:", approvals);
-        console.log("Denials:", denials);
-        console.log("Approvals required:", approvalsRequired);
-        console.log("Denials required:", denialsRequired);
-  
-        return {
-          ...tx,
-          approvals,
-          denials,
-          approvalsRequired,
-          denialsRequired,
-        };
-      })
-    );
-    setTxCount(pendingTransactions.length);
-    setPendingTx(pendingTxWithDetails);
+    try {
+      const pendingTxWithDetails = await Promise.all(
+        pendingTransactions.map(async (tx) => {
+          const transactionIndex = tx.transactionIndex; 
+          const approvals = await frontierMultisigContract.getTransactionApprovals(transactionIndex);
+          const denials = await frontierMultisigContract.getTransactionDenials(transactionIndex);
+          const approvalsRequired = await frontierMultisigContract.getApprovalsRequired();
+          const denialsRequired = await frontierMultisigContract.getDenialsRequired();  
+      
+          console.log("Approvals:", approvals);
+          console.log("Denials:", denials);
+          console.log("Approvals required:", approvalsRequired);
+          console.log("Denials required:", denialsRequired);
+      
+          return {
+            ...tx,
+            approvals,
+            denials,
+            approvalsRequired,
+            denialsRequired,
+          };
+        })
+      );
+      
+      setTxCount(pendingTransactions.length);
+      setPendingTx(pendingTxWithDetails);
+    } catch (error) {
+      setTxCount(0);
+      console.log(error);
+    }
+
   }
 
   async function approveTransaction(txIndex) {
@@ -69,14 +77,23 @@ function PendingTransactions({ activeWallet, setTxCount }) {
     const signer = await provider.getSigner();
     const frontierMultisigContract = new ethers.Contract(activeWallet, FrontierMultisig.abi, signer);
     try {
-      const tx = await frontierMultisigContract.approveTransaction(pendingTx[txIndex].txId);
+      console.log("Transaction index to approve:", pendingTx[txIndex].transactionIndex);
+      const tx = await frontierMultisigContract.approveTransaction(pendingTx[txIndex].transactionIndex);
       const receipt = await tx.wait();
       console.log("Approve transaction receipt:", receipt);
-      fetchPendingTransactions(); // Refresh pending transactions list after approval
+  
+      const approvals = await frontierMultisigContract.getTransactionApprovalCount(pendingTx[txIndex].transactionIndex);
+      const denials = await frontierMultisigContract.getTransactionDenialCount(pendingTx[txIndex].transactionIndex);
+  
+      const newPendingTx = pendingTx.map((tx, index) =>
+        index === txIndex ? { ...tx, approvals, denials } : tx
+      );
+      fetchPendingTransactions();      
     } catch (error) {
       console.error("Error approving transaction:", error.message);
     }
   }
+  
 
   async function denyTransaction(txIndex) {
     if (!activeWallet) {
@@ -88,10 +105,17 @@ function PendingTransactions({ activeWallet, setTxCount }) {
     const signer = await provider.getSigner();
     const frontierMultisigContract = new ethers.Contract(activeWallet, FrontierMultisig.abi, signer);
     try {
-      const tx = await frontierMultisigContract.denyTransaction(pendingTx[txIndex].txId);
+      const tx = await frontierMultisigContract.denyTransaction(pendingTx[txIndex].transactionIndex);
       const receipt = await tx.wait();
       console.log("Deny transaction receipt:", receipt);
-      fetchPendingTransactions(); // Refresh pending transactions list after denial
+  
+      const approvals = await frontierMultisigContract.getTransactionApprovalCount(pendingTx[txIndex].txId);
+      const denials = await frontierMultisigContract.getTransactionDenialCount(pendingTx[txIndex].txId);
+  
+      const newPendingTx = pendingTx.map((tx, index) =>
+        index === txIndex ? { ...tx, approvals, denials } : tx
+      );
+      fetchPendingTransactions();
     } catch (error) {
       console.error("Error denying transaction:", error.message);
     }
@@ -134,17 +158,8 @@ function PendingTransactions({ activeWallet, setTxCount }) {
           <FontAwesomeIcon icon={faSync} className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
         </button>
       </div>
-      {
-        pendingTx.length === 0 ||
-        pendingTx.every(
-          item =>
-            item.approvals >= item.approvalsRequired ||
-            item.denials >= item.denialsRequired
-        ) ? (
-          (() => {
-            setTxCount(0);
-            return <p className="text-gray-200">No pending transactions</p>;
-          })()
+       {pendingTx.length === 0 ? (
+          <p className="text-gray-200">No pending transactions</p>
         ) : (
         <div className="bg-white rounded-lg shadow">
           <ul className="divide-y divide-gray-200">

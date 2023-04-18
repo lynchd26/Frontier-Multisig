@@ -2,10 +2,14 @@
   "name": "hardhat-project",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^2.0.2",
+    "@nomiclabs/hardhat-ethers": "^2.2.3",
     "@nomiclabs/hardhat-waffle": "^2.0.5",
+    "chai": "^4.3.7",
     "ethereum-waffle": "^4.0.10",
+    "ethers": "^5.7.2",
     "file-loader": "^6.2.0",
-    "hardhat": "^2.13.0"
+    "hardhat": "^2.13.0",
+    "solidity-coverage": "^0.8.2"
   },
   "dependencies": {
     "@emotion/react": "^11.10.6",
@@ -16,7 +20,6 @@
     "@material-ui/core": "^4.12.4",
     "@mui/material": "^5.11.14",
     "@nomiclabs/hardhat-web3": "^2.0.0",
-    "ethers": "^5.7.2",
     "ethjs-query": "^0.3.8",
     "ethjs-rpc": "^0.2.0",
     "web3": "^1.8.2"

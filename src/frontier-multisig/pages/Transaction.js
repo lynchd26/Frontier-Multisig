@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import styles from '../styles/Transaction.module.css';
 
-function Transaction({ item, approveTransaction, denyTransaction, index }) {
+function Transaction({ item }) {
   const [expanded, setExpanded] = useState(false);
 
   const toggleExpanded = () => {

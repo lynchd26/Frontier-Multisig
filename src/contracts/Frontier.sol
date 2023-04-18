@@ -5,18 +5,20 @@ import "./FrontierMultisig.sol";
 
 contract Frontier {
     address[] public wallets;
-
+ 
     mapping (address => address) public walletFounders;
     mapping (address => address[]) public userWallets;
-    
+
+    event WalletCreated(address indexed wallet);
+
     function createWallet() public returns (address){
         FrontierMultisig newWallet = new FrontierMultisig(msg.sender);
         wallets.push(address(newWallet));
         walletFounders[address(newWallet)] = msg.sender;
         userWallets[msg.sender].push(address(newWallet));
+        emit WalletCreated(address(newWallet));
         return address(newWallet);
     }
-
 
     function getWallets() public view returns (address[] memory){
         return wallets;

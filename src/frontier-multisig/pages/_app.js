@@ -13,7 +13,6 @@ import Frontier from '../../artifacts/contracts/Frontier.sol/Frontier.json'
 
 function MyApp({ Component, pageProps }) {
   
-  const [walletButtonText, setWalletButtonText] = useState('Connect Wallet')
   const [currentPage, setCurrentPage] = useState('page1');
   const [userWallets, setUserWallets] = useState([]);
   const [balance, setBalance] = useState("0");
@@ -26,10 +25,8 @@ function MyApp({ Component, pageProps }) {
 
   useEffect(() => {
     fetchBalance();
-  }, [activeWallet]);
-  // const connectWallet = () => {
-  //   setWalletButtonText('Wallet Connected')
-  // }
+  }, [activeWallet, txCount]); 
+  
 
   async function viewMyWallets() {
     try {
@@ -62,7 +59,7 @@ function MyApp({ Component, pageProps }) {
       const walletBalance = await provider.getBalance(activeWallet);
       setBalance(parseUnitsBack(walletBalance));
     } catch (error) {
-      // setErrorMessage("Error fetching wallet balance: " + error.message);
+      console.log("Error fetching wallet balance: " + error.message);
     }
   }
 
@@ -77,23 +74,16 @@ function MyApp({ Component, pageProps }) {
       if (receipt) {
         viewMyWallets();
       }
-      console.log('New wallet address:', wallet);
+      console.log('New wallet address:', receipt.events[0].args[0]);
     } catch (error) {
-      // setErrorMessage('Error creating a new wallet: ' + error.message);
+      console.log('Error creating a new wallet: ' + error.message);
     }
   }
 
-  async function main(){
-    await window.ethereum.request({ method: 'eth_requestAccounts' });
-    var accountAddress = window.ethereum.selectedAddress;
-    setWalletButtonText(accountAddress)
-  }
 
   useEffect(() => {
     viewMyWallets();
   }, []);
-
-  main()
 
 
   return (

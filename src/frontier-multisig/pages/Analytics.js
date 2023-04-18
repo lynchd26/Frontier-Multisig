@@ -59,23 +59,7 @@ function Analytics( {activeWallet} ) {
         );
       
         setCompleteTx(completeTxWithDetails);
-      }
-
-      function parseUnitsBack(wei, decimals = 18) {
-        try {
-          const weiBigInt = BigInt(wei);
-          const factorBigInt = BigInt(10) ** BigInt(decimals);
-          const etherBigInt = weiBigInt / factorBigInt;
-          const remainderBigInt = weiBigInt % factorBigInt;
-          const ether = Number(etherBigInt) + Number(remainderBigInt) / Number(factorBigInt);
-        
-          return ether;
-        } catch (error) {
-          console.log(error);
-          return null;
-        }
-
-      }  
+      } 
 
       const handleRefreshClick = async () => {
         setIsRefreshing(true);
@@ -112,7 +96,7 @@ function Analytics( {activeWallet} ) {
           <FontAwesomeIcon icon={faSync} className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
         </button>
       </div>
-      {completeTx.length === 0 || completeTx.some(item => item.value === 1337) ? (
+      {completeTx.length === 0 ? (
         <p className="text-gray-200">No complete transactions</p>
       ) : (
         <div className="bg-white rounded-lg shadow">
@@ -122,8 +106,7 @@ function Analytics( {activeWallet} ) {
             const denied = item.denials;
             const approvalsReq = item.approvalsRequired;
             const denialsReq = item.denialsRequired;
-            const isApproved = approved >= approvalsReq;
-            const isDenied = denied >= denialsReq;
+ 
 
             const isFirstItem = index === 0;
             const isLastItem = index === completeTx.length - 1;
@@ -136,8 +119,8 @@ function Analytics( {activeWallet} ) {
               <div
                 key={index}
                 className={`${roundedClasses} ${
-                  isApproved ? "bg-green-100" : ""
-                } ${isDenied ? "bg-red-100" : ""}`}
+                  approved ? "bg-green-100" : ""
+                } ${denied ? "bg-red-100" : ""}`}
               >
                 <li className={`p-4 ${!isFirstItem && !isLastItem ? "border-b border-gray-200" : ""}`}>
                   <div className="flex justify-between items-center">
