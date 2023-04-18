@@ -3,8 +3,6 @@ import styles from '@/styles/Home.module.css'
 import { ethers } from 'ethers'
 import window from 'global'
 import React, { useState, useEffect } from "react";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSync } from '@fortawesome/free-solid-svg-icons';
 
 import MultisigWallet from './MultisigWallet.js';
 import PendingTransactions from './PendingTransactions.js';
@@ -22,13 +20,8 @@ import Manage from './Manage.js';
 function IndexPage({ currentPage, activeWallet, setBalance, txCount, setTxCount }) {
 
   const [pendingTx, setPendingTx] = useState([]);
-
-  const [depositAmount, setDepositAmount] = useState("");
   const [errorMessage, setErrorMessage] = useState('');
 
-
-
-  
   async function viewMyWallets() {
     try {
       await window.ethereum.request({ method: 'eth_requestAccounts' });
@@ -38,14 +31,12 @@ function IndexPage({ currentPage, activeWallet, setBalance, txCount, setTxCount 
       const userAddress = await signer.getAddress();
       const wallets = await frontierContract.getUserWallets(userAddress);
       if (wallets.length > 0) {
-        // setUserWallets(wallets);
         console.log('User wallets:', wallets);
       } else {
         console.log('No user wallets found');
       }
       console.log('User wallets:', wallets);
     } catch (error) {
-      // setErrorMessage('Error viewing wallets: ' + error.message);
       console.log('Error viewing wallets: ' + error.message);
     }
   }
@@ -118,15 +109,6 @@ function IndexPage({ currentPage, activeWallet, setBalance, txCount, setTxCount 
       console.error("Error fetching pending transactions:", error.message);
     }
 
-  }
-
-
-  function parseUnits(value) {
-    const [integer, decimal] = value.split(".");
-    const wei = integer + (decimal ? decimal.padEnd(18, "0") : "0".repeat(18));
-    const weiBigInt = BigInt(wei);
-  
-    return weiBigInt;
   }
   
   function parseUnitsBack(wei, decimals = 18) {

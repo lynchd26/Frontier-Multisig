@@ -82,12 +82,6 @@ function PendingTransactions({ activeWallet, setTxCount }) {
       const receipt = await tx.wait();
       console.log("Approve transaction receipt:", receipt);
   
-      const approvals = await frontierMultisigContract.getTransactionApprovalCount(pendingTx[txIndex].transactionIndex);
-      const denials = await frontierMultisigContract.getTransactionDenialCount(pendingTx[txIndex].transactionIndex);
-  
-      const newPendingTx = pendingTx.map((tx, index) =>
-        index === txIndex ? { ...tx, approvals, denials } : tx
-      );
       fetchPendingTransactions();      
     } catch (error) {
       console.error("Error approving transaction:", error.message);
@@ -109,12 +103,6 @@ function PendingTransactions({ activeWallet, setTxCount }) {
       const receipt = await tx.wait();
       console.log("Deny transaction receipt:", receipt);
   
-      const approvals = await frontierMultisigContract.getTransactionApprovalCount(pendingTx[txIndex].txId);
-      const denials = await frontierMultisigContract.getTransactionDenialCount(pendingTx[txIndex].txId);
-  
-      const newPendingTx = pendingTx.map((tx, index) =>
-        index === txIndex ? { ...tx, approvals, denials } : tx
-      );
       fetchPendingTransactions();
     } catch (error) {
       console.error("Error denying transaction:", error.message);
